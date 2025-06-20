@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36202.13 d17.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DragonCLI", "DragonCLI.csproj", "{F25135BB-D154-4FBE-B23D-607A0BA6DE3D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F25135BB-D154-4FBE-B23D-607A0BA6DE3D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F25135BB-D154-4FBE-B23D-607A0BA6DE3D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F25135BB-D154-4FBE-B23D-607A0BA6DE3D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F25135BB-D154-4FBE-B23D-607A0BA6DE3D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {81E134DA-A623-4734-AF36-CB9190F26DE5}
+	EndGlobalSection
+EndGlobal
