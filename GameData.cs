@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using DragonCLI.Dragons;
+using DragonCLI.Habitats;
 
 namespace DragonCLI
 {
@@ -25,8 +27,8 @@ namespace DragonCLI
             Food = 0;
             CurrentXP = 0;
             UserBreedingCave = new BreedingCave();
-            Dragons = [];
-            Habitats = [];
+            Dragons = [new EarthDragon(Dragon.GetRandomName())];
+            Habitats = [new EarthHabitat()];
             Farms = [];
             UserHatchery = new Hatchery();
         }

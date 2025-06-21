@@ -44,5 +44,18 @@ namespace DragonCLI
             }
             this.FoodLevel += food;
         }
+
+        public static string GetRandomName()
+        {
+            string[] defaultNames = [
+                "Draco", "Sparky", "Flamy", "Rocky", "Aqua", "Zappy", "Frosty", "Leafy",
+                "Shadow", "Luma", "Vulko", "Blaze", "Thunder", "Pebbles", "Nimbus",
+                "Scorch", "Spike", "Glimmer", "Ember", "Tundra", "Misty", "Ash", "Zephyr", "Bolt", "Luna"
+            ];
+
+            Random rand = new Random();
+            string dragonName = defaultNames[rand.Next(defaultNames.Length)];
+            return dragonName;
+        }
     }
 }

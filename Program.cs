@@ -56,7 +56,7 @@ namespace DragonCLI
                         Console.WriteLine("You are in the Dragons menu.");
                         break;
                     case MenuSelection.Store:
-                        Console.WriteLine("You are in the Store.");
+                        Menu.DisplayStore(gameData);
                         break;
                     case MenuSelection.Hatchery:
                         Console.WriteLine("Welcome to the Hatchery.");

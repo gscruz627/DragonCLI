@@ -8,19 +8,17 @@ using System.Xml.Linq;
 
 namespace DragonCLI.Dragons
 {
-    public class FireDragon : Dragon
+    public class EarthDragon : Dragon
     {
-        public FireDragon(string name)
+        public EarthDragon(string name)
         {
             Name = name;
-            Elements = ["Fire"];
+            Elements = ["Earth"];
             Level = 1;
-            GoldRate = 7;
+            GoldRate = 18;
             FoodLevel = 0;
             FoodLevelMax = 5;
             Attacks = [];
         }
-
-
     }
 }
