@@ -13,9 +13,10 @@ namespace DragonCLI.Habitats
             Name = "Fire Habitat";
             Level = 1;
             AllowedElements = ["Fire"];
-            Capacity = 0;
             MaxCapacity = 2;
             Occupants = [];
+            Gold = 0;
+            MaxGoldCapacity = 7500;
         }
 
     }

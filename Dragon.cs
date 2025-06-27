@@ -13,14 +13,20 @@ namespace DragonCLI
         public List<string>? Elements { get; set; }
         public int Level { get; set; }
         public int GoldRate { get; set; }
-        public int GoldProduced { get; set; }
         /*
          * Food Level varies by level this.Level * 100
          */
         public int FoodLevel { get; set; }
         public int FoodLevelMax { get; set; }
 
+        public string? FormalName { get; set; }
+
         public List<Attack>? Attacks { get; set; }
+
+        public Dragon(string name)
+        {
+            Name = name;
+        }
 
         public void LevelUp(int remainder)
         {
@@ -30,10 +36,6 @@ namespace DragonCLI
 
         }
 
-        public void Update()
-        {
-            this.GoldProduced += GoldRate;
-        }
 
         public void Feed(int food)
         {
@@ -50,7 +52,7 @@ namespace DragonCLI
             string[] defaultNames = [
                 "Draco", "Sparky", "Flamy", "Rocky", "Aqua", "Zappy", "Frosty", "Leafy",
                 "Shadow", "Luma", "Vulko", "Blaze", "Thunder", "Pebbles", "Nimbus",
-                "Scorch", "Spike", "Glimmer", "Ember", "Tundra", "Misty", "Ash", "Zephyr", "Bolt", "Luna"
+                "Scorch", "Spike", "Glimmer", "Ember", "Tundra", "Misty", "Ash", "Zephyr", "Bolt", "Luna", "Loche"
             ];
 
             Random rand = new Random();

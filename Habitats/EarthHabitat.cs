@@ -13,8 +13,9 @@ namespace DragonCLI.Habitats
             Name = "Earth Habitat";
             AllowedElements = ["Earth"];
             Level = 1;
-            Capacity = 0;
             MaxCapacity = 2;
+            Gold = 0;
+            MaxGoldCapacity = 500;
             Occupants = [];
         }
     }

@@ -17,9 +17,10 @@ namespace DragonCLI.Habitats
             Name = "Water Habitat";
             AllowedElements = ["Water"];
             Level = 1;
-            Capacity = 0;
             MaxCapacity = 2;
             Occupants = [];
+            MaxGoldCapacity = 1;
+            Gold = 0;
         }
     }
 }

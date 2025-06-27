@@ -20,6 +20,8 @@ namespace DragonCLI
         public List<Farm> Farms { get; set; }
         public Hatchery UserHatchery { get; set; }
 
+        public DateTime LastUpdated {  get; set; }
+
         public GameData()
         {
             Gold = 0;
@@ -27,10 +29,14 @@ namespace DragonCLI
             Food = 0;
             CurrentXP = 0;
             UserBreedingCave = new BreedingCave();
-            Dragons = [new EarthDragon(Dragon.GetRandomName())];
-            Habitats = [new EarthHabitat()];
+            Dragon initialDragon = new EarthDragon(Dragon.GetRandomName());
+            Dragons = [initialDragon];
+            Habitat initialHabitat = new EarthHabitat();
+            initialHabitat.Occupants.Add(initialDragon);
+            Habitats = [initialHabitat];
             Farms = [];
             UserHatchery = new Hatchery();
+            LastUpdated = DateTime.Now;
         }
     }
 }

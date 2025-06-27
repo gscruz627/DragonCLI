@@ -10,15 +10,15 @@ namespace DragonCLI.Dragons
 {
     public class EarthDragon : Dragon
     {
-        public EarthDragon(string name)
+        public EarthDragon(string name) : base(name)
         {
-            Name = name;
             Elements = ["Earth"];
             Level = 1;
             GoldRate = 18;
             FoodLevel = 0;
             FoodLevelMax = 5;
             Attacks = [];
+            FormalName = "Earth Dragon";
         }
     }
 }
