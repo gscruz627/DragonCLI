@@ -3,22 +3,23 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace DragonCLI.Habitats
 {
-    public class FireHabitat : Habitat
+    public class DarkHabitat : Habitat
     {
-        public FireHabitat()
+        public DarkHabitat()
         {
-            Name = "Fire";
+            Name = "Dark";
+            AllowedElements = ["Dark"];
             Level = 1;
-            AllowedElements = ["Fire"];
             MaxCapacity = 2;
-            Occupants = [];
             Gold = 0;
-            MaxGoldCapacity = 5000;
+            MaxGoldCapacity = 20000;
+            Occupants = [];
             GoldLastCollected = DateTime.Now;
-        }
 
+        }
     }
 }

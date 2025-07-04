@@ -17,6 +17,9 @@ namespace DragonCLI.Eggs
             HatchingTime = DateTime.Now;
             HatchingTime = HatchingTime.AddSeconds(15);
             TargetDragon = (name) => new EarthDragon(name);
+            Cost = 100;
+            HatchXP = 50;
+            BreedingTime = TimeSpan.FromSeconds(15);
         }
     }
 }

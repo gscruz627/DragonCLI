@@ -12,7 +12,10 @@ namespace DragonCLI
         public List<string> Elements { get; set; }
         public DateTime HatchingTime { get; set; }
         public Func<string, Dragon> TargetDragon { get; set; }
+        public TimeSpan BreedingTime { get; set; }
+        public int Cost { get; set; }
 
+        public int HatchXP { get; set; }
         public Dragon Hatch(string name)
         {            
             return TargetDragon(name);

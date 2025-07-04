@@ -15,9 +15,6 @@ namespace DragonCLI.Dragons
             Elements = ["Fire"];
             Level = 1;
             GoldRate = 7;
-            FoodLevel = 0;
-            FoodLevelMax = 5;
-            Attacks = [];
             FormalName = "Fire Dragon";
         }
 

@@ -6,19 +6,19 @@ using System.Threading.Tasks;
 
 namespace DragonCLI.Habitats
 {
-    public class FireHabitat : Habitat
+    public class NatureHabitat : Habitat
     {
-        public FireHabitat()
+        public NatureHabitat()
         {
-            Name = "Fire";
+            Name = "Nature";
+            AllowedElements = ["Nature"];
             Level = 1;
-            AllowedElements = ["Fire"];
             MaxCapacity = 2;
-            Occupants = [];
             Gold = 0;
-            MaxGoldCapacity = 5000;
+            MaxGoldCapacity = 10000;
+            Occupants = [];
             GoldLastCollected = DateTime.Now;
-        }
 
+        }
     }
 }

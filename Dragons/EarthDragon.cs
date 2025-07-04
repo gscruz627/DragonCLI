@@ -15,9 +15,6 @@ namespace DragonCLI.Dragons
             Elements = ["Earth"];
             Level = 1;
             GoldRate = 18;
-            FoodLevel = 0;
-            FoodLevelMax = 5;
-            Attacks = [];
             FormalName = "Earth Dragon";
         }
     }

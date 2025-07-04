@@ -18,33 +18,48 @@ namespace DragonCLI
          */
         public int FoodLevel { get; set; }
         public int FoodLevelMax { get; set; }
+        public int FoodPerPress { get; set; }
 
         public string? FormalName { get; set; }
 
+        public bool IsRare { get; set; }
+
         public List<Attack>? Attacks { get; set; }
+        public static Dictionary<int, int> FoodTable = new Dictionary<int,int>()
+        {
+            {5,20 },{10,40 }, {20,80},{40,160},
+            {80,320 },{160,640},{320,1280},{640,2560},
+            {1280,5120 },{1400,5600},{1500,6000},{1600,6400},
+            {1700,6800 },{1800,7200},{1900,7600},{2000,8000},
+            {2100,8400 },{2200,8800},{2300,9200}
+        };
 
         public Dragon(string name)
         {
             Name = name;
+            FoodLevel = 0;
+            FoodLevelMax = 20;
+            FoodPerPress = 5;
         }
 
-        public void LevelUp(int remainder)
+        public void LevelUp()
         {
-            this.FoodLevel = remainder;
-            this.FoodLevelMax = 2 * this.FoodLevelMax;
+            this.FoodLevel = 0;
+            this.FoodPerPress = FoodTable.ElementAt(Level).Key;
+            this.FoodLevelMax = FoodTable.ElementAt(Level).Value;
             this.Level += 1;
-
+            this.GoldRate *= 2;
         }
 
 
-        public void Feed(int food)
+        public void Feed()
         {
-            if (this.FoodLevel + food >= this.FoodLevelMax)
+            if (this.FoodLevel + FoodPerPress >= this.FoodLevelMax)
             {
-                this.LevelUp((this.FoodLevel + food) - this.FoodLevelMax);
+                if(this.Level < 20) this.LevelUp();
                 return;
             }
-            this.FoodLevel += food;
+            this.FoodLevel += FoodPerPress;
         }
 
         public static string GetRandomName()

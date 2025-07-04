@@ -14,13 +14,15 @@ namespace DragonCLI.Habitats
     {
         public WaterHabitat()
         {
-            Name = "Water Habitat";
+            Name = "Water";
             AllowedElements = ["Water"];
             Level = 1;
             MaxCapacity = 2;
             Occupants = [];
-            MaxGoldCapacity = 1;
+            MaxGoldCapacity = 7500;
             Gold = 0;
+            GoldLastCollected = DateTime.Now;
+
         }
     }
 }

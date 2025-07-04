@@ -24,9 +24,9 @@ namespace DragonCLI
 
         public GameData()
         {
-            Gold = 0;
+            Gold = 10000000;
             Level = 1;
-            Food = 0;
+            Food = 10000000;
             CurrentXP = 0;
             UserBreedingCave = new BreedingCave();
             Dragon initialDragon = new EarthDragon(Dragon.GetRandomName());

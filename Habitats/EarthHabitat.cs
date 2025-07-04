@@ -10,13 +10,14 @@ namespace DragonCLI.Habitats
     {
         public EarthHabitat()
         {
-            Name = "Earth Habitat";
+            Name = "Earth";
             AllowedElements = ["Earth"];
             Level = 1;
             MaxCapacity = 2;
             Gold = 0;
             MaxGoldCapacity = 500;
             Occupants = [];
+            GoldLastCollected = DateTime.Now;
         }
     }
 }

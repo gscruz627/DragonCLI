@@ -15,6 +15,8 @@ namespace DragonCLI
         public int MaxCapacity { get; set; }
         public int Gold { get; set; }
         public int MaxGoldCapacity { get; set; }
+        public DateTime? BuildingTime { get; set; }
+        public DateTime? GoldLastCollected { get; set; }
 
         public List<Dragon> Occupants { get; set; }
 
@@ -43,11 +45,14 @@ namespace DragonCLI
 
         public void Upgrade()
         {
+            this.Level = 2;
             this.MaxCapacity = 4;
+            this.MaxGoldCapacity *= 4;
         }
         public int RetrieveGold()
         {
             int gold = Gold;
+            GoldLastCollected = DateTime.Now;
             Gold = 0;
             return gold;
         }
