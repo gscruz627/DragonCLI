@@ -26,6 +26,8 @@ namespace DragonCLI
 
         static void Main()
         {
+            Console.BackgroundColor = ConsoleColor.DarkYellow;
+            Console.ForegroundColor = ConsoleColor.White;
 
             // Check if directory exists
             if (!Directory.Exists(PROJECT_ROOT))
@@ -281,7 +283,9 @@ Egg Store
                     (gameData.Level >= 8 && key == "Electric") ||
                     (gameData.Level >= 10 && key == "Ice") ||
                     (gameData.Level >= 15 && key == "Metal") ||
-                    (gameData.Level >= 18 && key == "Dark"))
+                    (gameData.Level >= 18 && key == "Dark") ||
+                    (gameData.Level >= 21 && key == "Legendary") ||
+                    (gameData.Level >= 35 && key == "Pure"))
                 {
                     availableHabitats[key] = kv.Value;
                 }
@@ -374,14 +378,18 @@ Hatchery
 
                 if (int.TryParse(choice, out int position))
                 {
-                    Egg egg = gameData.UserHatchery.Eggs[position - 1];
-                    if(egg.HatchingTime < DateTime.Now)
+                    if(position > 0 && position < gameData.UserHatchery.Eggs.Count + 1)
                     {
-                        PlaceEggInHabitat(egg);
-                    } else
-                    {
-                        Console.WriteLine("Egg has not hatched yet! Press any key to continue.");
-                        Console.ReadKey();
+                        Egg egg = gameData.UserHatchery.Eggs[position - 1];
+                        if (egg.HatchingTime < DateTime.Now)
+                        {
+                            PlaceEggInHabitat(egg);
+                        }
+                        else
+                        {
+                            Console.WriteLine("Egg has not hatched yet! Press any key to continue.");
+                            Console.ReadKey();
+                        }
                     }
                 }
             }
@@ -599,7 +607,7 @@ Select Crop to Grow
                 Console.Write(@"
 Feed Dragons
 -----------------------------");
-                Console.WriteLine($"FOOD: {gameData.Food}");
+                Console.WriteLine($"\nFOOD: {gameData.Food}");
                 Console.Write(@"
 [1...] Feed (FoodPerClick) to Dragon
 [B] Back
@@ -612,8 +620,14 @@ Feed Dragons
                     foreach (var dragon in habitat.Occupants)
                     {
                         indexedDragons.Add(dragon);
-                        Console.WriteLine($"{index + 1}. {dragon.Name} - {dragon.FormalName} [lvl {dragon.Level}] ({dragon.FoodLevel}/{dragon.FoodLevelMax}) +{dragon.FoodPerPress}");
-                        index++;
+                        if(dragon.Level < 20)
+                        {
+                            Console.WriteLine($"{index + 1}. {dragon.Name} - {dragon.FormalName} [lvl {dragon.Level}] ({dragon.FoodLevel}/{dragon.FoodLevelMax}) +{dragon.FoodPerPress}");
+                        } else
+                        {
+                            Console.WriteLine($"{index + 1}. {dragon.Name} - {dragon.FormalName} [lvl 20] (MAX)");
+                        }
+                            index++;
                     }
                 }
 
@@ -633,10 +647,14 @@ Feed Dragons
                         var dragon = indexedDragons[position - 1];
                         if (gameData.Food >= dragon.FoodPerPress)
                         {
-                            dragon.Feed();
-                            gameData.Food -= dragon.FoodPerPress;
-                            Console.WriteLine("Dragon Fed! Press any key to continue");
-                            Console.ReadKey();
+                            if(dragon.Level < 20)
+                            {
+                                dragon.Feed();
+                                gameData.Food -= dragon.FoodPerPress;
+                                Console.WriteLine("Dragon Fed! Press any key to continue");
+                                Console.ReadKey();
+                            }
+
                         }
                         else
                         {
@@ -807,7 +825,54 @@ Breeding Cave
 ");
                 if( (gameData.UserBreedingCave.Dragon1 is not null) && (gameData.UserBreedingCave.Dragon2 is not null))
                 {
-                    // Display Progress and try to get hEgg
+                    // Display Progress and try to get Egg
+                    Console.WriteLine("[P] Try to pick up Egg\n[B] Back");
+                    Console.WriteLine("-----------------------------------");
+                    TimeSpan timeLeft = gameData.UserBreedingCave.DueDate - DateTime.Now ?? TimeSpan.MinValue;
+                    dragon1 = gameData.UserBreedingCave.Dragon1;
+                    dragon2 = gameData.UserBreedingCave.Dragon2;
+                    Console.WriteLine("Dragons are Breeding: ");
+                    Console.Write($"{dragon1.Name} - {dragon1.FormalName}");
+                    Console.WriteLine($" & {dragon2.Name} - {dragon2.FormalName}");
+                    string breedingMessage = (timeLeft.TotalSeconds >= 0) ? timeLeft.Humanize(minUnit: TimeUnit.Second, maxUnit: TimeUnit.Hour, precision: 3) : "[DONE]";
+                    Console.WriteLine($"Due in: {breedingMessage}");
+                    Console.Write("Choice>");
+
+                    string choice = Console.ReadLine()?.Trim().ToLower();
+                    if(choice == "b")
+                    {
+                        viewing = false;
+                        break;
+                    }
+                    else if(choice == "p")
+                    {
+                        if(timeLeft.TotalSeconds <= 0)
+                        {
+                            if(gameData.UserHatchery.Eggs.Count < 4)
+                            {
+                                gameData.UserHatchery.Eggs.Add(gameData.UserBreedingCave.BreedOutcome);
+                                Console.WriteLine($"A new {gameData.UserBreedingCave.BreedOutcome.DragonName} has been placed in the Hatchery! Press any key to exit."); ;
+                                gameData.UserBreedingCave.Dragon1 = null;
+                                gameData.UserBreedingCave.Dragon2 = null;
+                                gameData.UserBreedingCave.DueDate = null;
+                                gameData.UserBreedingCave.BreedOutcome = null;
+                                Console.ReadKey();
+                                viewing = false;
+                                break;
+                            }
+                            else
+                            {
+                                Console.WriteLine("Hatchery is full! Hatch some eggs first. Press any key to continue.");
+                                Console.ReadKey();
+                            }
+                            
+                        }
+                        else
+                        {
+                            Console.WriteLine("Egg is not ready yet! Press any key to continue.");
+                            Console.ReadKey();
+                        }
+                    }
                 } else
                 {
                     // Select both dragons.
@@ -854,7 +919,11 @@ Breeding Cave
                                 dragonIndex++;
                                 gameData.UserBreedingCave.Dragon1 = dragon1;
                                 gameData.UserBreedingCave.Dragon2 = dragon2;
-                                Console.WriteLine("Done");
+
+                                // Pick egg and edit properties
+                                gameData.UserBreedingCave.BreedOutcome = Breed(dragon1, dragon2);
+                                gameData.UserBreedingCave.DueDate = DateTime.Now + gameData.UserBreedingCave.BreedOutcome.BreedingTime;
+                                Console.WriteLine($"Dragons are breeding! Breeding will take: {gameData.UserBreedingCave.BreedOutcome.BreedingTime.Humanize(minUnit:TimeUnit.Second, maxUnit:TimeUnit.Hour, precision:3)}. Press any key to exit");
                                 Console.ReadKey();
                             }
                         }
@@ -862,10 +931,10 @@ Breeding Cave
                 }
             }
         }
-        public static void Breed(Dragon dragon1, Dragon dragon2)
+        public static Egg Breed(Dragon dragon1, Dragon dragon2)
         {
             Random random = new Random();
-            string outcome = "";
+            Egg outcome = null;
             string element1 = "";
             string element2 = "";
 
@@ -879,7 +948,7 @@ Breeding Cave
             if (isLegendary1 && isLegendary2)
             {
                 int randomIndex = random.Next(BreedingCave.LegendaryDragons.Count);
-                outcome = BreedingCave.LegendaryDragons[randomIndex];
+                outcome = BreedingCave.LegendaryDragons[randomIndex]();
             }
             // Only one is Legendary: use elements from the non-Legendary dragon
             else if (isLegendary1 || isLegendary2)
@@ -900,7 +969,7 @@ Breeding Cave
                 element2 = elements[1];
 
                 // Lookup result (assuming you have a method like this)
-                outcome = BreedingCave.RegularBreedingTable[element1][element2];
+                outcome = BreedingCave.RegularBreedingTable[element1][element2]();
             }
             else if (isRare1 && isRare2)
             {
@@ -909,7 +978,7 @@ Breeding Cave
                 if (pick > 90)
                 {
                     int randomIndex = random.Next(BreedingCave.LegendaryDragons.Count);
-                    outcome = BreedingCave.LegendaryDragons[randomIndex];
+                    outcome = BreedingCave.LegendaryDragons[randomIndex]();
                 }
                 else
                 {
@@ -947,10 +1016,10 @@ Breeding Cave
                     // Check if entry for these elements exists.
                     if(BreedingCave.SpecialBreedingTable.ContainsKey(element1) && BreedingCave.SpecialBreedingTable[element1].ContainsKey(element2))
                     {
-                        outcome = BreedingCave.SpecialBreedingTable[element1][element2];
+                        outcome = BreedingCave.SpecialBreedingTable[element1][element2]();
                     } else
                     {
-                        outcome = BreedingCave.RegularBreedingTable[element1][element2];
+                        outcome = BreedingCave.RegularBreedingTable[element1][element2]();
                     }
                 }              
             }
@@ -958,8 +1027,9 @@ Breeding Cave
             {
                 element1 = dragon1.Elements[random.Next(dragon1.Elements.Count)];
                 element2 = dragon2.Elements[random.Next(dragon2.Elements.Count)];
-                outcome = BreedingCave.RegularBreedingTable[element1][element2];
+                outcome = BreedingCave.RegularBreedingTable[element1][element2]();
             }
+            return outcome;
         }
         public static void CheckLevel()
         {
@@ -1058,6 +1128,28 @@ Breeding Cave
                 UpdateXP = 1500000,
                 UpdateCost = 3000000,
                 CreateHabitat = () => new DarkHabitat()
+            },
+            ["Legendary"] = new HabitatInfo
+            {
+                DisplayName = "Legendary",
+                Cost = 1500000,
+                BuildDuration = TimeSpan.FromHours(8),
+                UpdateDuration = TimeSpan.FromHours(30),
+                BuildXP = 5000000,
+                UpdateXP = 7000000,
+                UpdateCost = 9000000,
+                CreateHabitat = () => new LegendaryHabitat()
+            },
+            ["Pure"] = new HabitatInfo
+            {
+                DisplayName = "Pure",
+                Cost = 700000,
+                BuildDuration = TimeSpan.FromHours(6),
+                UpdateDuration = TimeSpan.FromHours(30),
+                BuildXP = 3750000,
+                UpdateXP = 4750000,
+                UpdateCost = 4200000,
+                CreateHabitat = () => new PureHabitat()
             }
         };
 

@@ -31,7 +31,7 @@ namespace DragonCLI
             {80,320 },{160,640},{320,1280},{640,2560},
             {1280,5120 },{1400,5600},{1500,6000},{1600,6400},
             {1700,6800 },{1800,7200},{1900,7600},{2000,8000},
-            {2100,8400 },{2200,8800},{2300,9200}
+            {2100,8400 },{2200,8800},{2300,9200}, {0,0}
         };
 
         public Dragon(string name)
@@ -44,11 +44,14 @@ namespace DragonCLI
 
         public void LevelUp()
         {
-            this.FoodLevel = 0;
-            this.FoodPerPress = FoodTable.ElementAt(Level).Key;
-            this.FoodLevelMax = FoodTable.ElementAt(Level).Value;
-            this.Level += 1;
-            this.GoldRate *= 2;
+            if(this.Level <= 19)
+            {
+                this.FoodLevel = 0;
+                this.FoodPerPress = FoodTable.ElementAt(Level).Key;
+                this.FoodLevelMax = FoodTable.ElementAt(Level).Value;
+                this.Level += 1;
+                this.GoldRate *= 2;
+            }
         }
 
 

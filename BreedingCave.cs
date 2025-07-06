@@ -1,4 +1,6 @@
-﻿using System;
+﻿using DragonCLI.Dragons;
+using DragonCLI.Eggs;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,6 +12,8 @@ namespace DragonCLI
     {
         public Dragon Dragon1 { get; set; }
         public Dragon Dragon2 { get; set; }
+        public Egg BreedOutcome { get; set; }
+        public DateTime? DueDate { get; set; }
         public static Dictionary<string, string> Opposites = new()
         {
             ["Earth"] = "Metal",
@@ -18,194 +22,192 @@ namespace DragonCLI
             ["Nature"] = "Electric"
         };
 
-        public static Dictionary<string, Dictionary<string, string>> RegularBreedingTable = new()
+        public static Dictionary<string, Dictionary<string, Func<Egg>>> RegularBreedingTable = new()
         {
-            ["Earth"] =
+            ["Earth"] = new Dictionary<string, Func<Egg>>
             {
-                ["Earth"] = "Earth",
-                ["Fire"] = "Flaming Rock",
-                ["Water"] = "Waterfall",
-                ["Nature"] = "Tropical",
-                ["Electric"] = "Star",
-                ["Ice"] = "Snowflake",
-                ["Metal"] = "Armadillo",
-                ["Dark"] = "Hedgehog",
-                ["Pure"] = "Pure Earth"
+                ["Earth"] = () => new EarthEgg(),
+                ["Fire"] = () => new FlamingRockEgg(),
+                ["Water"] = () => new WaterfallEgg(),
+                ["Nature"] = () => new TropicalEgg(),
+                ["Electric"] = () => new StarEgg(),
+                ["Ice"] = () => new SnowflakeEgg(),
+                ["Metal"] = () => new ArmadilloEgg(),
+                ["Dark"] = () => new HedgehogEgg(),
+                ["Pure"] = () => new PureEarthEgg(),
             },
-            ["Fire"] =
+            ["Fire"] = new Dictionary<string, Func<Egg>>
             {
-                ["Earth"] = "Volcano",
-                ["Fire"] = "Fire",
-                ["Water"] = "Cloud",
-                ["Nature"] = "Firebird",
-                ["Electric"] = "Hot Metal",
-                ["Ice"] = "Cool Fire",
-                ["Metal"] = "Medieval",
-                ["Dark"] = "Vampire",
-                ["Pure"] = "Pure Fire"
+                ["Earth"] = () => new VolcanoEgg(),
+                ["Fire"] = () => new FireEgg(),
+                ["Water"] = () => new CloudEgg(),
+                ["Nature"] = () => new FirebirdEgg(),
+                ["Electric"] = () => new HotMetalEgg(),
+                ["Ice"] = () => new CoolFireEgg(),
+                ["Metal"] = () => new MedievalEgg(),
+                ["Dark"] = () => new VampireEgg(),
+                ["Pure"] = () => new PureFireEgg()
             },
-            ["Water"] =
+            ["Water"] = new Dictionary<string, Func<Egg>>
             {
-                ["Earth"] = "Mud",
-                ["Fire"] = "Blizzard",
-                ["Water"] = "Water",
-                ["Nature"] = "Nenufar",
-                ["Electric"] = "Storm",
-                ["Ice"] = "Ice Cube",
-                ["Metal"] = "Seashell",
-                ["Dark"] = "Petroleum",
-                ["Pure"] = "Pure Water"
+                ["Earth"] = () => new MudEgg(),
+                ["Fire"] = () => new BlizzardEgg(),
+                ["Water"] = () => new WaterEgg(),
+                ["Nature"] = () => new NenufarEgg(),
+                ["Electric"] = () => new StormEgg(),
+                ["Ice"] = () => new IceCubeEgg(),
+                ["Metal"] = () => new SeashellEgg(),
+                ["Dark"] = () => new PetroleumEgg(),
+                ["Pure"] = () => new PureWaterEgg()
             },
-            ["Nature"] =
+            ["Nature"] = new Dictionary<string, Func<Egg>>
             {
-                ["Earth"] = "Cactus",
-                ["Fire"] = "Spicy",
-                ["Water"] = "Coral",
-                ["Nature"] = "Nature",
-                ["Electric"] = "Gummy",
-                ["Ice"] = "Dandelion",
-                ["Metal"] = "Dragonfly",
-                ["Dark"] = "Carnivore Plant",
-                ["Pure"] = "Pure Nature"
+                ["Earth"] = () => new CactusEgg(),
+                ["Fire"] = () => new SpicyEgg(),
+                ["Water"] = () => new CoralEgg(),
+                ["Nature"] = () => new NatureEgg(),
+                ["Electric"] = () => new GummyEgg(),
+                ["Ice"] = () => new DandelionEgg(),
+                ["Metal"] = () => new DragonflyEgg(),
+                ["Dark"] = () => new CarnivorousPlantEgg(),
+                ["Pure"] = () => new PureNatureEgg()
             },
-            ["Electric"] =
+            ["Electric"] = new Dictionary<string, Func<Egg>>
             {
-                ["Earth"] = "Chameleon",
-                ["Fire"] = "Laser",
-                ["Water"] = "Lantern Fish",
-                ["Nature"] = "Gummy",
-                ["Electric"] = "Electric",
-                ["Ice"] = "Fluorescent",
-                ["Metal"] = "Battery",
-                ["Dark"] = "Neon",
-                ["Pure"] = "Pure Electric"
+                ["Earth"] = () => new ChameleonEgg(),
+                ["Fire"] = () => new LaserEgg(),
+                ["Water"] = () => new LanternFishEgg(),
+                ["Nature"] = () => new GummyEgg(),
+                ["Electric"] = () => new ElectricEgg(),
+                ["Ice"] = () => new FluorescentEgg(),
+                ["Metal"] = () => new BatteryEgg(),
+                ["Dark"] = () => new NeonEgg(),
+                ["Pure"] = () => new PureElectricEgg()
             },
-            ["Ice"] =
+            ["Ice"] = new Dictionary<string, Func<Egg>>
             {
-                ["Earth"] = "Alpine",
-                ["Fire"] = "Soccer",
-                ["Water"] = "Ice Cream",
-                ["Nature"] = "Mojito",
-                ["Electric"] = "Moose",
-                ["Ice"] = "Ice",
-                ["Metal"] = "Platinum",
-                ["Dark"] = "Penguin",
-                ["Pure"] = "Pure Ice",
-
+                ["Earth"] = () => new AlpineEgg(),
+                ["Fire"] = () => new SoccerEgg(),
+                ["Water"] = () => new IceCreamEgg(),
+                ["Nature"] = () => new MojitoEgg(),
+                ["Electric"] = () => new MooseEgg(),
+                ["Ice"] = () => new IceEgg(),
+                ["Metal"] = () => new PlatinumEgg(),
+                ["Dark"] = () => new PenguinEgg(),
+                ["Pure"] = () => new PureIceEgg()
             },
-            ["Metal"] =
+            ["Metal"] = new Dictionary<string, Func<Egg>>
             {
-                ["Earth"] = "Armadillo",
-                ["Fire"] = "Steampunk",
-                ["Water"] = "Mercury",
-                ["Nature"] = "Jade",
-                ["Electric"] = "Gold",
-                ["Ice"] = "Pearl",
-                ["Metal"] = "Metal",
-                ["Dark"] = "Zombie",
-                ["Pure"] = "Pure Metal"
+                ["Earth"] = () => new ArmadilloEgg(),
+                ["Fire"] = () => new SteampunkEgg(),
+                ["Water"] = () => new MercuryEgg(),
+                ["Nature"] = () => new JadeEgg(),
+                ["Electric"] = () => new GoldEgg(),
+                ["Ice"] = () => new PearlEgg(),
+                ["Metal"] = () => new MetalEgg(),
+                ["Dark"] = () => new ZombieEgg(),
+                ["Pure"] = () => new PureMetalEgg()
             },
-            ["Dark"] =
+            ["Dark"] = new Dictionary<string, Func<Egg>>
             {
-                ["Earth"] = "Venom",
-                ["Fire"] = "Dark Fire",
-                ["Water"] = "Pirate",
-                ["Nature"] = "Rattle Snake",
-                ["Electric"] = "Neon",
-                ["Ice"] = "Penguin",
-                ["Metal"] = "Zombie",
-                ["Pure"] = "Pure Dark"
+                ["Earth"] = () => new VenomEgg(),
+                ["Fire"] = () => new DarkFireEgg(),
+                ["Water"] = () => new PirateEgg(),
+                ["Nature"] = () => new RattlesnakeEgg(),
+                ["Electric"] = () => new NeonEgg(),
+                ["Ice"] = () => new PenguinEgg(),
+                ["Metal"] = () => new ZombieEgg(),
+                ["Pure"] = () => new PureDarkEgg()
             },
-            ["Pure"] =
+            ["Pure"] = new Dictionary<string, Func<Egg>>
             {
-                ["Earth"] = "Pure Earth",
-                ["Fire"] = "Pure Fire",
-                ["Water"] = "Pure Water",
-                ["Nature"] = "Pure Nature",
-                ["Electric"] = "Pure Electric",
-                ["Ice"] = "Pure Ice",
-                ["Metal"] = "Pure Metal",
-                ["Dark"] = "Pure Dark"
+                ["Earth"] = () => new PureEarthEgg(),
+                ["Fire"] = () => new PureFireEgg(),
+                ["Water"] = () => new PureWaterEgg(),
+                ["Nature"] = () => new PureNatureEgg(),
+                ["Electric"] = () => new PureElectricEgg(),
+                ["Ice"] = () => new PureIceEgg(),
+                ["Metal"] = () => new PureMetalEgg(),
+                ["Dark"] = () => new PureDarkEgg()
             }
         };
-        public static Dictionary<string, Dictionary<string, string>> SpecialBreedingTable = new()
+
+        public static Dictionary<string, Dictionary<string, Func<Egg>>> SpecialBreedingTable = new()
         {
-            ["Earth"] =
+            ["Earth"] = new()
             {
-                ["Fire"] = "Chinese",
-                ["Water"] = "Plankton",
-                ["Nature"] = "Deep Forest",
-                ["Electric"] = "Bat",
-                ["Ice"] = "Santa",
-                ["Dark"] = "Wizard"
-
+                ["Fire"] = () => new ChineseEgg(),
+                ["Water"] = () => new PlanktonEgg(),
+                ["Nature"] = () => new DeepForestEgg(),
+                ["Electric"] = () => new BatEgg(),
+                ["Ice"] = () => new SantaEgg(),
+                ["Dark"] = () => new WizardEgg()
             },
-            ["Fire"] =
+            ["Fire"] = new()
             {
-                ["Earth"] = "Aztec",
-                ["Water"] = "Thanksgiving",
-                ["Nature"] = "Quetzal",
-                ["Electric"] = "Aurora",
-                ["Ice"] = "Ice and Fire",
-                ["Metal"] = "Carnival",
-                ["Dark"] = "Joker"
+                ["Earth"] = () => new AztecEgg(),
+                ["Water"] = () => new ThanksgivingEgg(),
+                ["Nature"] = () => new QuetzalEgg(),
+                ["Electric"] = () => new AuroraEgg(),
+                ["Ice"] = () => new IceAndFireEgg(),
+                ["Metal"] = () => new CarnivalEgg(),
+                ["Dark"] = () => new JokerEgg()
             },
-            ["Water"] =
+            ["Water"] = new()
             {
-                ["Earth"] = "Jelly",
-                ["Fire"] = "Thanksgiving",
-                ["Nature"] = "Seahorse",
-                ["Electric"] = "Hydra",
-                ["Ice"] = "Viking",
-                ["Metal"] = "Alien",
-                ["Dark"] = "Octopus"
+                ["Earth"] = () => new JellyEgg(),
+                ["Fire"] = () => new ThanksgivingEgg(),
+                ["Nature"] = () => new SeahorseEgg(),
+                ["Electric"] = () => new HydraEgg(),
+                ["Ice"] = () => new VikingEgg(),
+                ["Metal"] = () => new AlienEgg(),
+                ["Dark"] = () => new OctopusEgg()
             },
-            ["Nature"] =
+            ["Nature"] = new()
             {
-                ["Earth"] = "Brontosaurus",
-                ["Fire"] = "Paradise",
-                ["Water"] = "Jellyfish",
-                ["Electric"] = "St Patrick",
-                ["Metal"] = "Ninja",
-                ["Dark"] = "Two Headed"
+                ["Earth"] = () => new BrontosaurusEgg(),
+                ["Fire"] = () => new ButterflyEgg(),
+                ["Water"] = () => new JellyfishEgg(),
+                ["Electric"] = () => new StPatrickEgg(),
+                ["Metal"] = () => new NinjaEgg(),
+                ["Dark"] = () => new TwoHeadedEgg()
             },
-            ["Electric"] =
+            ["Electric"] = new()
             {
-                ["Earth"] = "Sky",
-                ["Fire"] = "Music",
-                ["Water"] = "Hydra",
-                ["Nature"] = "St Patrick",
-                ["Ice"] = "Prisma",
-                ["Metal"] = "Uncle Sam",
-                ["Dark"] = "Block"
+                ["Earth"] = () => new SkyEgg(),
+                ["Fire"] = () => new MusicEgg(),
+                ["Water"] = () => new HydraEgg(),
+                ["Nature"] = () => new StPatrickEgg(),
+                ["Ice"] = () => new PrismaEgg(),
+                ["Metal"] = () => new UncleSamEgg(),
+                ["Dark"] = () => new BlockEgg()
             },
-            ["Ice"] =
+            ["Ice"] = new()
             {
-                ["Earth"] = "Great White",
-                ["Fire"] = "Ice and Fire",
-                ["Water"] = "Viking",
-                ["Electric"] = "Prisma",
-                ["Dark"] = "Fossil"
-
+                ["Earth"] = () => new GreatWhiteEgg(),
+                ["Fire"] = () => new IceAndFireEgg(),
+                ["Water"] = () => new VikingEgg(),
+                ["Electric"] = () => new PrismaEgg(),
+                ["Dark"] = () => new FossilEgg()
             },
-            ["Metal"] =
+            ["Metal"] = new()
             {
-                ["Fire"] = "King",
-                ["Water"] = "Alien",
-                ["Nature"] = "Queen",
-                ["Electric"] = "Uncle Sam"
+                ["Fire"] = () => new KingEgg(),
+                ["Water"] = () => new AlienEgg(),
+                ["Nature"] = () => new QueenEgg(),
+                ["Electric"] = () => new UncleSamEgg()
             },
-            ["Dark"] =
+            ["Dark"] = new()
             {
-                ["Earth"] = "Ghost",
-                ["Fire"] = "Joker",
-                ["Water"] = "Octopus",
-                ["Nature"] = "Evil Pumpkin",
-                ["Electric"] = "Block",
-                ["Ice"] = "Fossil"
-
+                ["Earth"] = () => new GhostEgg(),
+                ["Fire"] = () => new JokerEgg(),
+                ["Water"] = () => new OctopusEgg(),
+                ["Nature"] = () => new EvilPumpkinEgg(),
+                ["Electric"] = () => new BlockEgg(),
+                ["Ice"] = () => new FossilEgg()
             }
         };
-        public static List<string> LegendaryDragons = ["Legendary", "Crystal", "Mirror", "Wind"];
+
+        public static List<Func<Egg>> LegendaryDragons = [() => new LegendaryEgg(), () => new CrystalEgg(), () => new MirrorEgg(), () => new AirEgg()];
     }
 }
