@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,8 +13,8 @@ namespace DragonCLI.Eggs
         {
             DragonName = "Nenufar Dragon Egg";
             Elements = ["Water", "Nature"];
-            HatchingTime = DateTime.Now.AddHours(7);
-            TargetDragon = (name) => new NenufarDragon(name);
+            HatchingDuration = TimeSpan.FromHours(7);
+TargetDragonClassName = "Dragons.NenufarDragon";
             Cost = Int32.MaxValue;
             HatchXP = 1000;
             BreedingTime = TimeSpan.FromHours(5);

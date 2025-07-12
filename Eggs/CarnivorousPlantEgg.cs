@@ -1,4 +1,4 @@
-﻿using DragonCLI.Dragons;
+using DragonCLI.Dragons;
 namespace DragonCLI.Eggs
 {
     public class CarnivorousPlantEgg : Egg
@@ -7,8 +7,8 @@ namespace DragonCLI.Eggs
         {
             DragonName = "Carnivorous Plant Dragon Egg";
             Elements = ["Nature", "Dark"];
-            HatchingTime = DateTime.Now.AddHours(19);
-            TargetDragon = (name) => new CarnivorousPlantDragon(name);
+            HatchingDuration = TimeSpan.FromHours(19);
+TargetDragonClassName = "Dragons.CarnivorousPlantDragon";
             Cost = Int32.MaxValue;
             HatchXP = 50000;
             BreedingTime = TimeSpan.FromHours(13);

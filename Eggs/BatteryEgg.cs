@@ -1,4 +1,4 @@
-﻿using DragonCLI.Dragons;
+using DragonCLI.Dragons;
 namespace DragonCLI.Eggs
 {
     public class BatteryEgg : Egg
@@ -7,8 +7,8 @@ namespace DragonCLI.Eggs
         {
             DragonName = "Battery Dragon Egg";
             Elements = ["Electric", "Gold"];
-            HatchingTime = DateTime.Now.AddHours(19);
-            TargetDragon = (name) => new BatteryDragon(name);
+            HatchingDuration = TimeSpan.FromHours(19);
+TargetDragonClassName = "Dragons.BatteryDragon";
             Cost = Int32.MaxValue;
             HatchXP = 10000;
             BreedingTime = TimeSpan.FromHours(13);

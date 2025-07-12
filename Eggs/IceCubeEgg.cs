@@ -1,4 +1,4 @@
-﻿using DragonCLI.Dragons;
+using DragonCLI.Dragons;
 using System.Xml.Linq;
 namespace DragonCLI.Eggs
 {
@@ -8,8 +8,8 @@ namespace DragonCLI.Eggs
         {
             DragonName = "Ice Cube Dragon Egg";
             Elements = ["Water", "Ice"];
-            HatchingTime = DateTime.Now.AddHours(15);
-            TargetDragon = (name) => new IceCubeDragon(name);
+            HatchingDuration = TimeSpan.FromHours(15);
+TargetDragonClassName = "Dragons.IceCubeDragon";
             Cost = Int32.MaxValue;
             HatchXP = 5000;
             BreedingTime = TimeSpan.FromHours(9);

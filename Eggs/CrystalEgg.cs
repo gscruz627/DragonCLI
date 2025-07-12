@@ -1,4 +1,4 @@
-﻿using DragonCLI.Dragons;
+using DragonCLI.Dragons;
 namespace DragonCLI.Eggs
 {
     public class CrystalEgg : Egg
@@ -7,8 +7,8 @@ namespace DragonCLI.Eggs
         {
             DragonName = "Crystal Dragon Egg";
             Elements = ["Legendary"];
-            HatchingTime = DateTime.Now.AddHours(58);
-            TargetDragon = (name) => new CrystalDragon(name);
+            HatchingDuration = TimeSpan.FromHours(58);
+TargetDragonClassName = "Dragons.CrystalDragon";
             Cost = Int32.MaxValue;
             HatchXP = 432000;
             BreedingTime = TimeSpan.FromHours(50);

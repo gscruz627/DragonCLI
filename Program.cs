@@ -3,31 +3,19 @@ using DragonCLI.Eggs;
 using DragonCLI.Habitats;
 using Humanizer;
 using Humanizer.Localisation;
-using System;
-using System.IO;
-using System.Linq;
-using System.Reflection.Metadata;
-using System.Runtime.CompilerServices;
-using System.Text.Json;
-using System.Xml.Linq;
-using static System.Runtime.InteropServices.JavaScript.JSType;
+using Newtonsoft.Json;
 
 namespace DragonCLI
 {
     class Program
     {
         static readonly string PROJECT_ROOT = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "DragonCity");
-        static readonly string SAVE_FILE = Path.Combine(PROJECT_ROOT, "data.json");
-        public static readonly int[] xpThresholds = { 1, 200, 500, 1400, 2900 };
-        static readonly object locker = new object();
+        static readonly string SAVE_FILENAME = Path.Combine(PROJECT_ROOT, "data.json");
         static bool running = true;
-        static GameData? gameData = null;
-
+        static GameData gameData;
 
         static void Main()
         {
-            Console.BackgroundColor = ConsoleColor.DarkYellow;
-            Console.ForegroundColor = ConsoleColor.White;
 
             // Check if directory exists
             if (!Directory.Exists(PROJECT_ROOT))
@@ -36,22 +24,30 @@ namespace DragonCLI
             }
 
             // Check if save file exists
-            if (File.Exists(SAVE_FILE))
+            if (File.Exists(SAVE_FILENAME))
             {
-                var savedFileJsonString = File.ReadAllText(SAVE_FILE);
-                gameData = JsonSerializer.Deserialize<GameData>(savedFileJsonString);
+                //Configure Serializer & Deserialize data into a GameData instance.
+                var settings = new JsonSerializerSettings
+                {
+                    TypeNameHandling = TypeNameHandling.Auto
+                };
+                string json = File.ReadAllText(SAVE_FILENAME);
+                gameData = JsonConvert.DeserializeObject<GameData>(json, settings);
                 Console.WriteLine("Found Saved Data, Restoring...");
-
-                // TODO:Restore data if saved
             }
             else
             {
+                // Create new GameData and give the user a beginner habitat and dragon.
                 gameData = new GameData();
+                gameData.InitializeNewGame();
+                Dragon initialDragon = new EarthDragon(Dragon.GetRandomName());
+                gameData.Dragons = [initialDragon];
+                Habitat initialHabitat = EarthHabitat.CreateDefault();
+                initialHabitat.Occupants.Add(initialDragon);
+                gameData.Habitats = [initialHabitat];
                 Console.WriteLine("No Saved Data Found, Starting a new Game...");
             }
-
             Thread.Sleep(2000);
-
             while (running)
             {
                 MainMenu();
@@ -60,46 +56,36 @@ namespace DragonCLI
         static void MainMenu()
         {
             Console.Clear();
-            Console.Write(@"
-Welcome to Dragon CLI Game
----------------------------
-1. Book of Dragons
-2. Feed Dragons
-3. Breed Dragons
-4. Hatch Eggs
-5. Visit Shop
-6. Manage Farms
-7. Manage Habitats
-8. Save and Exit
-
-Choice> ");
-            string? choice = Console.ReadLine()?.Trim();
+            Console.WriteLine("Welcome to Dragon CLI Game");
+            Console.WriteLine("---------------------------");
+            Console.WriteLine(gameData.Level < 50
+                ? $"LVL {gameData.Level} ({gameData.CurrentXP}/{Helper.xpThresholds[gameData.Level - 1]})"
+                : $"LVL {gameData.Level}");
+            Helper.WriteLineColored($"GOLD: {gameData.Gold}g", ConsoleColor.Yellow);
+            Helper.WriteLineColored($"FOOD: {gameData.Food}f", ConsoleColor.Red);
+            Console.WriteLine("---------------------------");
+            Console.WriteLine("1. Book of Dragons");
+            Console.WriteLine("2. Feed Dragons");
+            Console.WriteLine("3. Breed Dragons");
+            Console.WriteLine("4. Hatch Eggs");
+            Console.WriteLine("5. Visit Shop");
+            Console.WriteLine("6. Manage Farms");
+            Console.WriteLine("7. Manage Habitats");
+            Console.WriteLine("8. Save and Exit");
+            Console.Write("Choice> ");
+            string choice = Console.ReadLine()?.Trim();
 
             switch (choice)
             {
-                case "1":
-                    ViewDragons();
-                    break;
-                case "2":
-                    ViewFeedDragons();
-                    break;
-                case "3":
-                    ViewBreedingCave();
-                    break;
-                case "4":
-                    ViewHatchery();
-                    break;
-                case "5":
-                    ViewStore();
-                    break;
-                case "6":
-                    ViewFarms();
-                    break;
-                case "7":
-                    ViewHabitats();
-                    break;
+                case "1": ViewDragons(); break;
+                case "2": ViewFeedDragons(); break;
+                case "3": ViewBreedingCave(); break;
+                case "4": ViewHatchery(); break;
+                case "5": ViewStore(); break;
+                case "6": ViewFarms(); break;
+                case "7": ViewHabitats(); break;
+                case "8": SaveAndExit(); break;
             }
-
         }
 
         static void ViewDragons()
@@ -107,78 +93,70 @@ Choice> ");
             bool viewing = true;
             while (viewing)
             {
+                // Display the Book of Dragons, a list of all dragons and whether the user has unlocked them.
                 Console.Clear();
-                Console.WriteLine(@"
-Dragon Book
--------------------------
-");
-
-                foreach (var dragon in gameData.Dragons)
+                Console.WriteLine("Book of Dragons");
+                Console.WriteLine("--------------------");
+                Console.WriteLine("[Any Key] Back");
+                Console.WriteLine("--------------------");
+                Console.WriteLine($"Dragons Discovered: {gameData?.DiscoveredDragons.Values.Count((value) => value is true)}/{gameData?.DiscoveredDragons.Count}\n");
+                var allNames = gameData?.DiscoveredDragons.Keys.ToList();
+                for(int i = 0; i < allNames?.Count; i++)
                 {
-                    Console.Write("In construction...");
-                    Console.Write("[B] Back \n Choice> ");
-                    string? choice = Console.ReadLine()?.Trim().ToLower();
-                    switch (choice)
-                    {
-                        case "b":
-                            viewing = false;
-                            break;
-                        default:
-                            Console.Write("Invalid, Choice> ");
-                            Console.ReadKey();
-                            break;
-                    }
-
-
+                    bool discovered = gameData?.DiscoveredDragons[allNames[i]] ?? false;
+                    string status = discovered ? "[X]" : "[ ]";
+                    Console.WriteLine($"{status} {i + 1}. {allNames[i]}");
                 }
-
+                Console.ReadKey();
+                viewing = false;
+                break;
             }
         }
 
         static void ViewStore()
         {
+            int farmsLimit = Helper.GetFarmLimit(in gameData);
             bool viewing = true;
             while (viewing)
             {
                 Console.Clear();
-                Console.Write(@"
-Store
--------------------------
-");
-                Console.Write($"GOLD: {gameData.Gold}g");
-                Console.Write(@"
-[1...] Selection
-[B] Back
--------------------------
-1. Eggs
-2. Habitats
-3. Farms (100g)
-
-Choice> ");
-                string? choice = Console.ReadLine()?.Trim();
+                Console.WriteLine("Store");
+                Console.WriteLine("-------------------------");
+                Helper.WriteLineColored($"GOLD: {gameData?.Gold}g", ConsoleColor.Yellow);
+                Console.WriteLine("[1...] Selection");
+                Console.WriteLine("[B] Back");
+                Console.WriteLine("-------------------------");
+                Console.WriteLine("1. Eggs");
+                Console.WriteLine("2. Habitats");
+                Console.Write($"3. Farms "); Helper.WriteColored("(100g) ", ConsoleColor.Yellow); Console.WriteLine($"{gameData?.Farms.Count}/{farmsLimit}");
+                Console.Write("Choice> ");
+                string choice = Console.ReadLine()?.Trim().ToLower();
                 switch (choice)
                 {
-                    case "1":
-                        ViewEggStore();
-                        break;
-                    case "2":
-                        ViewHabitatStore();
-                        break;
-                    case "3":
-                        if(gameData.Gold > 100)
+                    case "1": ViewEggStore(); break; 
+                    case "2": ViewHabitatStore(); break;
+                    case "3": 
+                        if(gameData?.Gold >= 100) 
                         {
-                            var farm = new Farm();
-                            Console.WriteLine($"You Purchased a new Farm! Press any key to exit.");
-                            gameData.Farms.Add(farm);
-                            gameData.Gold -= 100;
+                            if(gameData.Farms.Count < farmsLimit)
+                            {
+                                var farm = new Farm();
+                                Helper.WriteLineColored($"You Purchased a new Farm! Press any key to exit.", ConsoleColor.Green);
+                                gameData.Farms.Add(farm); gameData.Gold -= 100; gameData.CurrentXP += 100; CheckLevel();
+                                Console.ReadKey();
+                            } else
+                            {
+                                Helper.WriteLineColored("You cannot purchase more farms at the moment! Level up first! Press any key to continue", ConsoleColor.DarkRed);
+                                Console.ReadKey();
+                            }
+
+                        } else
+                        {
+                            Console.WriteLine("You don't have enough gold to purchase a farm! Press any key to continue");
                             Console.ReadKey();
                         }
-                        break;
-                    case "b":
-                        viewing = false;
-                        break;
-                    default:
-                        break;
+                            break;
+                    case "b": viewing = false; break;
                 }
 
             }
@@ -186,84 +164,58 @@ Choice> ");
 
         static void ViewEggStore()
         {
-            Dictionary<string, int> availableEggs = new(){
-                { "Earth", 100},
-                { "Fire", 100},
-                { "Water", 350}
-            };
-            if (gameData.Level >= 5) availableEggs.Add("Nature", 1000);
-            if (gameData.Level >= 8) availableEggs.Add("Electric", 4500);
-            if (gameData.Level >= 10) availableEggs.Add("Ice", 15000);
-            if (gameData.Level >= 15) availableEggs.Add("Metal", 60000);
-            if (gameData.Level >= 18) availableEggs.Add("Dark", 120000);
+            Dictionary<string, int> availableEggs = Helper.GetAvailableEggs(in gameData);
             bool viewing = true;
             while (viewing)
             {
                 Console.Clear();
-                Console.Write(@"
-Egg Store
--------------------------
-");
-                Console.Write($"GOLD: {gameData.Gold}g");
-                Console.Write(@"
-[1...] Selection
-[B] Back
--------------------------
-");
+                Console.WriteLine("Egg Store");
+                Console.WriteLine("-------------------------");
+                Helper.WriteColored($"GOLD: {gameData?.Gold}g", ConsoleColor.Yellow);
+                Console.WriteLine("[1...] Selection");
+                Console.WriteLine("[B] Back");
+                Console.WriteLine("-------------------------");
                 for (int i = 0; i < availableEggs.Count; i++)
                 {
-                    Console.WriteLine($"{i + 1}. {availableEggs.ElementAt(i).Key} Dragon Egg ({availableEggs.ElementAt(i).Value}g)");
+                    Console.Write($"{i + 1}. {availableEggs.ElementAt(i).Key} Dragon Egg");
+                    Helper.WriteLineColored($"{availableEggs.ElementAt(i).Value}g)", ConsoleColor.Yellow);
                 }
-
                 Console.Write("\nChoice> ");
-
                 string choice = Console.ReadLine()?.Trim().ToLower();
-
-                if(choice == "b")
-                {
-                    viewing = false;
-                    break;
-                }
-
+                if(choice == "b") { viewing = false; break; }
                 if(int.TryParse(choice, out int position))
                 {
                     if (position > 0 && position < availableEggs.Count + 1)
                     {
-                        var eggFactories = new Dictionary<string, Func<Egg>>
-                        {
-                            { "Earth", () => new EarthEgg() },
-                            { "Fire",  () => new FireEgg() }
-                            // Add more if needed
-                        };
-
                         string eggString = availableEggs.ElementAt(position - 1).Key;
-
-                        if (eggFactories.TryGetValue(eggString, out var createEgg))
+                        if (Helper.EggFactories.TryGetValue(eggString, out var createEgg))
                         {
-                            Egg egg = createEgg();
-
-                            if(gameData.UserHatchery.Eggs.Count >= 3)
+                            if (gameData?.UserHatchery.Eggs.Count >= 3)
                             {
-                                Console.WriteLine("Hatchery is full! Try to hatch some eggs first... Press any key to continue.");
+                                Helper.WriteLineColored("Hatchery is full! Try to hatch some eggs first... Press any key to continue.", ConsoleColor.DarkRed);
                                 Console.ReadKey();
-                                break;
-                            }
-                            if (gameData.Gold >= egg.Cost)
-                            {
-                                gameData.Gold -= egg.Cost;
-                                gameData.UserHatchery.Eggs.Add(egg);
-                                Console.WriteLine($"You purchased: {eggString} Egg for {egg.Cost}g! Press any key to exit.");
-                                viewing = false;
-                                Console.ReadKey();
-                                break;
                             }
                             else
                             {
-                                Console.WriteLine($"You do not have enough Gold to purchase the {eggString} Egg. Cost: {egg.Cost}, Your Gold: {gameData.Gold}. Press any key to continue.");
-                                Console.ReadKey();
+                                Egg egg = createEgg();
+                                if (gameData?.Gold >= egg.Cost)
+                                {
+                                    gameData.Gold -= egg.Cost;
+                                    gameData.UserHatchery.Eggs.Add(egg);
+                                    egg.HatchingTime = DateTime.Now + egg.HatchingDuration;
+                                    Helper.WriteLineColored($"You purchased: {eggString} Egg for {egg.Cost}g! Press any key to exit.", ConsoleColor.Green);
+                                    Console.ReadKey();
+                                    viewing = false;
+                                    break;
+                                }
+                                else
+                                {
+                                    Helper.WriteLineColored($"You do not have enough Gold to purchase the {eggString} Egg. Cost: {egg.Cost}, Your Gold: {gameData.Gold}. Press any key to continue.", ConsoleColor.DarkRed);
+                                    Console.ReadKey();
+                                }
                             }
+
                         }
-                        Console.ReadKey();
 
                     }
 
@@ -273,74 +225,55 @@ Egg Store
 
         static void ViewHabitatStore()
         {
-            Dictionary<string, HabitatInfo> availableHabitats = new();
-
-            foreach (var kv in AllHabitats)
-            {
-                string key = kv.Key;
-                if ((key == "Earth" || key == "Fire" || key == "Water") ||
-                    (gameData.Level >= 5 && key == "Nature") ||
-                    (gameData.Level >= 8 && key == "Electric") ||
-                    (gameData.Level >= 10 && key == "Ice") ||
-                    (gameData.Level >= 15 && key == "Metal") ||
-                    (gameData.Level >= 18 && key == "Dark") ||
-                    (gameData.Level >= 21 && key == "Legendary") ||
-                    (gameData.Level >= 35 && key == "Pure"))
-                {
-                    availableHabitats[key] = kv.Value;
-                }
-            }
-
+            Dictionary<string, HabitatInfo> availableHabitats = Helper.GetAvailableHabitats(in gameData);
+            int habitatLimit = Helper.GetHabitatLimit(in gameData);
             bool viewing = true;
             while (viewing)
             {
                 Console.Clear();
-                Console.Write(@"
-Habitat Store
--------------------------");
-                Console.Write($"\nGOLD: {gameData.Gold}g");
-                Console.Write(@"
-[1...] Selection
-[B] Back
--------------------------
-");
-
+                Console.WriteLine("Habitat Store");
+                Console.WriteLine("-------------------------");
+                Helper.WriteColored($"GOLD: {gameData?.Gold}g - Habitat Count: {gameData?.Habitats.Count}/{habitatLimit}", ConsoleColor.Yellow);
+                Console.WriteLine("[1...] Selection");
+                Console.WriteLine("[B] Back");
+                Console.WriteLine("-------------------------");
                 int idx = 1;
                 foreach (var kv in availableHabitats)
                 {
                     var info = kv.Value;
-                    Console.WriteLine($"{idx++}. {info.DisplayName} Habitat - Cost: {info.Cost} Gold, Build Time: {info.BuildDuration.Humanize(precision: 1)}");
+                    Console.Write($"{idx++}. {info.DisplayName} Habitat - ");
+                    Helper.WriteColored("Cost: {info.Cost} Gold", ConsoleColor.Yellow);
+                    Console.WriteLine($", Build Time: {info.BuildDuration.Humanize(precision: 1)}");
                 }
-
                 Console.Write("\nChoice> ");
-
                 string choice = Console.ReadLine()?.Trim().ToLower();
-
-                if(choice == "b")
-                {
-                    viewing = false;
-                    break;
-                }
+                if(choice == "b") { viewing = false; break; }
                 if (int.TryParse(choice, out int position) && position > 0 && position <= availableHabitats.Count)
                 {
                     var selected = availableHabitats.ElementAt(position - 1);
                     var habitatInfo = selected.Value;
-
-                    if (gameData.Gold >= habitatInfo.Cost)
+                    if (gameData?.Gold >= habitatInfo.Cost)
                     {
-                        Habitat habitat = habitatInfo.CreateHabitat();
-                        habitat.BuildingTime = DateTime.Now.Add(habitatInfo.BuildDuration);
-                        gameData.Gold -= habitatInfo.Cost;
-                        gameData.Habitats.Add(habitat);
-                        Console.WriteLine($"You Purchased: {habitatInfo.DisplayName} Habitat (Ready in {habitatInfo.BuildDuration.Humanize(precision: 1)}). Press any key to continue.");
-                        viewing = false;
+                        if (gameData.Habitats.Count < habitatLimit)
+                        {
+                            Habitat habitat = habitatInfo.CreateHabitat();
+                            habitat.BuildingTime = DateTime.Now.Add(habitatInfo.BuildDuration);
+                            gameData.Gold -= habitatInfo.Cost;
+                            gameData.Habitats.Add(habitat);
+                            Helper.WriteLineColored($"You Purchased: {habitatInfo.DisplayName} Habitat (Ready in {habitatInfo.BuildDuration.Humanize(precision: 1)}). Press any key to continue.", ConsoleColor.Green);
+                            viewing = false; break;
+                        }
+                        else
+                        {
+                            Helper.WriteLineColored("You cannot buy more habitats at this moment. Level up first! Press any key to continue", ConsoleColor.DarkRed);
+                            Console.ReadKey();
+                        }
                     }
                     else
                     {
-                        Console.WriteLine($"Not enough gold. You need {habitatInfo.Cost}, but have {gameData.Gold}. Press any key.");
+                        Helper.WriteLineColored($"Not enough gold. You need {habitatInfo.Cost}, but have {gameData?.Gold}. Press any key.", ConsoleColor.DarkRed);
+                        Console.ReadKey();
                     }
-
-                    Console.ReadKey();
                 }
             }
         }
@@ -351,45 +284,33 @@ Habitat Store
             while (viewing)
             {
                 Console.Clear();
-                Console.Write(@"
-Hatchery
--------------------------
-[1...] Try to hatch this egg
-[B] Back
-[Any Key] Refresh
--------------------------
-");
-                for(int i = 0; i < gameData.UserHatchery.Eggs.Count; i++)
+                Console.WriteLine("Hatchery");
+                Console.WriteLine("-------------------------");
+                Console.WriteLine("[1...] Try to hatch this egg");
+                Console.WriteLine("[B] Back");
+                Console.WriteLine("[Any Key] Refresh");
+                Console.WriteLine("-------------------------");
+                for (int i = 0; i < gameData?.UserHatchery.Eggs.Count; i++)
                 {
                     Egg egg = gameData.UserHatchery.Eggs[i];
                     TimeSpan timeLeft = egg.HatchingTime - DateTime.Now;
                     string hatchStatus = (timeLeft.TotalSeconds <= 0) ? "HATCHED!" : timeLeft.Humanize(maxUnit: TimeUnit.Hour, minUnit: TimeUnit.Second, precision: 3);
-                    Console.WriteLine($"{i + 1}. {egg.DragonName} ({hatchStatus})");
+                    string line = $"{i + 1}. {egg.DragonName} ({hatchStatus})";
+                    if (hatchStatus == "HATCHED!") Helper.WriteLineColored(line, ConsoleColor.Green);
+                    else Console.WriteLine(line);
                 }
-
                 Console.Write("Choice> ");
-                string? choice = Console.ReadLine()?.Trim().ToLower();
-
-                if (choice == "b")
+                string choice = Console.ReadLine()?.Trim().ToLower();
+                if (choice == "b") { viewing = false; break; }
+                if (int.TryParse(choice, out int position) &&
+                    position > 0 && position <= gameData?.UserHatchery.Eggs.Count)
                 {
-                    viewing = false;
-                    break;
-                }
-
-                if (int.TryParse(choice, out int position))
-                {
-                    if(position > 0 && position < gameData.UserHatchery.Eggs.Count + 1)
+                    Egg egg = gameData?.UserHatchery.Eggs[position - 1];
+                    if (egg?.HatchingTime <= DateTime.Now) { PlaceEggInHabitat(egg); }
+                    else
                     {
-                        Egg egg = gameData.UserHatchery.Eggs[position - 1];
-                        if (egg.HatchingTime < DateTime.Now)
-                        {
-                            PlaceEggInHabitat(egg);
-                        }
-                        else
-                        {
-                            Console.WriteLine("Egg has not hatched yet! Press any key to continue.");
-                            Console.ReadKey();
-                        }
+                        Helper.WriteLineColored("Egg has not hatched yet! Press any key to continue.", ConsoleColor.DarkRed);
+                        Console.ReadKey();
                     }
                 }
             }
@@ -401,58 +322,43 @@ Hatchery
             while (viewing)
             {
                 Console.Clear();
-                Console.WriteLine(@"
-Place egg (only valid habitat showing)
----------------------------------------------------
-[1...] Selection
-[B] Back
-");
+                Console.WriteLine("Place egg (only valid habitat showing)");
+                Console.WriteLine("---------------------------------------------------");
+                Console.WriteLine("[1...] Selection");
+                Console.WriteLine("[B] Back");
                 foreach (var element in egg.Elements)
                 {
-                    foreach (var habitat in gameData.Habitats)
+                    foreach (var habitat in gameData?.Habitats ?? Enumerable.Empty<Habitat>())
                     {
-                        if (habitat.AllowedElements.Contains(element) && habitat.Occupants.Count < habitat.MaxCapacity && (habitat.BuildingTime is null))
-                        {
-                            compatibleHabitats.Add(habitat);
-                        }
+                        if (habitat.AllowedElements == null ||
+                            !habitat.AllowedElements.Contains(element) ||
+                            habitat.Occupants.Count >= habitat.MaxCapacity ||
+                            habitat.BuildingTime is not null)
+                        { continue; }
+                        compatibleHabitats.Add(habitat);
                     }
                 }
-
                 for (int i = 0; i < compatibleHabitats.Count; i++)
                 {
                     Console.WriteLine($"{i + 1}. {compatibleHabitats[i].Name} Habitat ({compatibleHabitats[i].Occupants.Count}/{compatibleHabitats[i].MaxCapacity})");
                 }
-
                 Console.Write("Choice> ");
-
-                string? choice = Console.ReadLine()?.Trim().ToLower();
-
-                if(choice == "b")
+                string choice = Console.ReadLine()?.Trim().ToLower();
+                if(choice == "b") { viewing = false; break; }
+                if (int.TryParse(choice, out int position) && position > 0 && position <= compatibleHabitats.Count)
                 {
-                    viewing = false;
-                    break;
-                }
-
-                if(int.TryParse(choice, out int position))
-                {
-                    if (position > 0 && position < compatibleHabitats.Count + 1) 
-                    {
-                        Console.Write("Please Give this Dragon a name (leave empty for random)> ");
-                        string name = Console.ReadLine()?.Trim().ToLower();
-                        gameData.UserHatchery.Eggs.Remove(egg);
-                        Dragon dragon = egg.Hatch((name.Length > 0) ? name : Dragon.GetRandomName());
-                        compatibleHabitats.ElementAt(position - 1).Occupants.Add(dragon);
-                        gameData.Dragons.Add(dragon);
-                        gameData.CurrentXP += egg.HatchXP;
-                        CheckLevel();
-                        Console.WriteLine("You have placed this egg! Press any key to exit.");
-                        viewing = false;
-                    } else
-                    {
-                        Console.WriteLine("Invalid Number. Try again");
-                    }
-                    Console.ReadKey();
-                    break;
+                    Console.Write("Please Give this Dragon a name (leave empty for random)> ");
+                    string name = Console.ReadLine()?.Trim().ToLower();
+                    gameData?.UserHatchery.Eggs.Remove(egg);
+                    Dragon dragon = egg.Hatch(!string.IsNullOrEmpty(name) ? name : Dragon.GetRandomName());
+                    compatibleHabitats[position - 1].Occupants.Add(dragon);
+                    if (dragon?.FormalName != null && (gameData?.DiscoveredDragons.ContainsKey(dragon.FormalName) ?? false))
+                    { gameData!.DiscoveredDragons[dragon.FormalName] = true; }
+                    if (dragon != null) { gameData?.Dragons.Add(dragon); }
+                    if (gameData != null) { gameData.CurrentXP += egg.HatchXP; }
+                    CheckLevel();
+                    Helper.WriteLineColored("You have placed this egg! Press any key to exit.", ConsoleColor.Green);
+                    Console.ReadKey(); viewing = false; break;
                 }
             }
         }
@@ -462,89 +368,72 @@ Place egg (only valid habitat showing)
             while (viewing)
             {
                 Console.Clear();
-                Console.Write(@"
-Manage Farms
--------------------------------");
-                Console.Write($"\nFOOD: {gameData.Food}f");
-                Console.Write(@"
-[1...] To Pick Up or Grow
-[Upgrade 1...] To Upgrade Farm
-[B] To Back
-[Any Key] Refresh
--------------------------------
-");
-                for(int i = 0; i < gameData.Farms.Count; i++)
+                Console.WriteLine("Manage Farms");
+                Console.WriteLine("-------------------------------");
+                Helper.WriteColored($"GOLD: {gameData?.Gold}g\n", ConsoleColor.Yellow);
+                Helper.WriteColored($"FOOD: {gameData?.Food}f\n", ConsoleColor.Red);
+                Console.WriteLine("[1...] To Pick Up or Grow");
+                Console.WriteLine("[Upgrade 1...] To Upgrade Farm");
+                Console.WriteLine("[B] To Back");
+                Console.WriteLine("[Any Key] Refresh");
+                Console.WriteLine("-------------------------------");
+
+                for (int i = 0; i < gameData?.Farms.Count; i++)
                 {
                     string producingLine;
-
-                    Crop? crop = gameData.Farms[i].CurrentCrop;
+                    Crop crop = gameData.Farms[i].CurrentCrop;
                     var due = gameData.Farms[i].DueDateTime;
-
-                    if (crop is null || due is null)
-                    {
-                        producingLine = "[AVAILABLE]";
-                    }
-                    else if (due.Value <= DateTime.Now)
-                    {
-                        producingLine = "[DONE]";
-                    }
+                    if (crop is null || due is null) { producingLine = "[AVAILABLE]"; }
+                    else if (due.Value <= DateTime.Now) { producingLine = "[DONE]"; }
                     else
                     {
                         TimeSpan diff = due.Value - DateTime.Now;
                         producingLine = $"[PRODUCING {crop.Name}, Due In: {diff.Humanize(minUnit: TimeUnit.Second, maxUnit: TimeUnit.Hour, precision: 3)}]";
                     }
-                    Console.WriteLine($"{i+1}. {gameData.Farms[i].FarmType} {producingLine}");
+                    Console.Write($"{i+1}. {gameData.Farms[i].FarmType} {producingLine} ");
+                    switch (gameData.Farms[i].FarmType)
+                    {
+                        case "Farm": Helper.WriteLineColored("UPDATE: 25000g", ConsoleColor.Yellow); break;
+                        case "Big Food Farm": Helper.WriteLineColored("UPDATE: 250000g", ConsoleColor.Yellow); break;
+                        default: Console.WriteLine(); break;
+                    }
                 }
-
                 Console.Write("\nChoice> ");
                 string choice = Console.ReadLine()?.Trim().ToLower();
-
-                if (choice == "b")
+                if (choice == "b") { viewing = false; break; }
+                if (choice?.StartsWith("upgrade") ?? false)
                 {
-                    viewing = false;
-                    break;
-                }
-
-                if (choice.StartsWith("upgrade"))
-                {
-                    if (int.TryParse(choice.Substring(8), out int inner_position))
+                    if (int.TryParse(choice.AsSpan(8), out int pos) && pos > 0 && pos <= gameData?.Farms.Count)
                     {
-                        if (inner_position > 0 && inner_position < gameData.Farms.Count + 1)
-                        {
-                            if (!(gameData.Farms[inner_position - 1].Upgrade(ref gameData)))
-                            {
-                                Console.WriteLine("You do not have enough Gold to upgrade this farm. Press any key to continue.");
-                            }
-                            Console.ReadKey();
-                        }
+                        if (!gameData.Farms[pos - 1].Upgrade(ref gameData))
+                            Helper.WriteLineColored("You do not have enough Gold to upgrade this farm. Press any key to continue.", ConsoleColor.DarkRed);
+
+                        Console.ReadKey();
                     }
                 }
 
                 if (int.TryParse(choice, out int position))
                 {
-                    var farm = gameData.Farms[position - 1];
-                    if (farm.CurrentCrop is null)
-                    {
-                        // Farm is Available
-                        GrowCrop(farm);
-                    }
+                    var farm = gameData?.Farms[position - 1];
+                    if (farm?.CurrentCrop is null) { if (farm is not null) { GrowCrop(farm); } }
                     else
                     {
-                        //First Check if Growing is done, if so, pickup the food.
                         if (farm.DueDateTime < DateTime.Now)
                         {
-                            gameData.Food += farm.CurrentCrop.FoodAmount;
-                            gameData.CurrentXP += farm.CurrentCrop.XPAmount;
+                            if (gameData is not null)
+                            {
+                                gameData.Food += farm.CurrentCrop.FoodAmount;
+                                gameData.CurrentXP += farm.CurrentCrop.XPAmount;
+                            }
+                            Helper.WriteLineColored($"Picked up {farm.CurrentCrop.FoodAmount}f Gained {farm.CurrentCrop.XPAmount} XP. Press any key to continue", ConsoleColor.Green);
                             CheckLevel();
-                            Console.WriteLine($"Picked up {farm.CurrentCrop.FoodAmount}f Gained {farm.CurrentCrop.XPAmount} XP. Press any key to continue");
                             farm.CurrentCrop = null;
                             farm.DueDateTime = null;
                             Console.ReadKey();
-
                         }
                         else
                         {
-                            Console.WriteLine("Farm is not done producing! Press any key to continue.");
+                            Helper.WriteLineColored("Farm is not done producing! Press any key to continue.", ConsoleColor.DarkRed);
                             Console.ReadKey();
                         }
                     }
@@ -557,42 +446,38 @@ Manage Farms
             while (viewing)
             {
                 Console.Clear();
-                Console.WriteLine(@"
-Select Crop to Grow
----------------------------------
-[1...] To Select
-[B] To Back
----------------------------------
-");
-                Console.WriteLine($"GOLD: {gameData.Gold}");
+                Console.WriteLine("Select Crop to Grow");
+                Console.WriteLine("---------------------------------");
+                Console.WriteLine("[1...] To Select");
+                Console.WriteLine("[B] To Back");
+                Console.WriteLine("---------------------------------");
+                Helper.WriteLineColored($"GOLD: {gameData?.Gold}", ConsoleColor.Yellow);
                 for (int i = 0; i < farm.AvailableCrops.Count; i++)
                 {
                     Crop crop = farm.AvailableCrops[i];
-                    Console.WriteLine($"{i + 1}. {crop.Name} ({crop.Cost}g) [{crop.FoodAmount}f] in {crop.Duration.Humanize(minUnit: TimeUnit.Second, maxUnit: TimeUnit.Hour, precision: 3)}, Earn {crop.XPAmount} XP");
+                    Console.Write($"{i + 1}. {crop.Name} ");
+                    Helper.WriteColored($"({crop.Cost}g) ", ConsoleColor.Yellow);
+                    Helper.WriteColored($"[{crop.FoodAmount}f]", ConsoleColor.Red);
+                    Console.Write($"in {crop.Duration.Humanize(minUnit: TimeUnit.Second, maxUnit: TimeUnit.Hour, precision: 3)}, ");
+                    Helper.WriteColored("Earn {crop.XPAmount} XP", ConsoleColor.Cyan);
                 }
-
                 Console.Write("\nChoice> ");
                 string choice = Console.ReadLine()?.Trim();
-
-                if (choice == "b")
+                if (choice == "b") { viewing = false; break; }
+                if (int.TryParse(choice, out int position) && position > 0 && position < farm.AvailableCrops.Count + 1)
                 {
-                    viewing = false;
-                    break;
-                }
-
-                if (int.TryParse(choice, out int position))
-                {
-                    if(gameData.Gold >= farm.AvailableCrops[position - 1].Cost)
+                    if (gameData?.Gold >= farm.AvailableCrops[position - 1].Cost)
                     {
                         gameData.Gold -= farm.AvailableCrops[position - 1].Cost;
                         farm.CurrentCrop = farm.AvailableCrops[position - 1];
                         farm.DueDateTime = DateTime.Now + farm.AvailableCrops[position - 1].Duration;
-                        Console.Write("This crop has started producing. Press any key to continue.");
-                        viewing = false;
+                        Helper.WriteColored("This crop has started producing. Press any key to continue.", ConsoleColor.Green);
                         Console.ReadKey();
-                    } else
+                        viewing = false;
+                    }
+                    else
                     {
-                        Console.Write("You don't have enough Gold to grow this crop. Press any key to continue.");
+                        Helper.WriteColored("You don't have enough Gold to grow this crop. Press any key to continue.", ConsoleColor.DarkRed);
                         Console.ReadKey();
                     }
                 }
@@ -604,18 +489,18 @@ Select Crop to Grow
             while (viewing)
             {
                 Console.Clear();
-                Console.Write(@"
-Feed Dragons
------------------------------");
-                Console.WriteLine($"\nFOOD: {gameData.Food}");
-                Console.Write(@"
-[1...] Feed (FoodPerClick) to Dragon
-[B] Back
------------------------------
-");
+                Console.WriteLine("Feed Dragons");
+                Console.WriteLine("-----------------------------");
+                Helper.WriteColored("FOOD: ", ConsoleColor.Red);
+                Console.WriteLine($"{gameData?.Food}");
+                Console.WriteLine("[1...] Feed (FoodPerClick) to Dragon");
+                Console.WriteLine("[Remove 1...] Remove this dragon.");
+                Console.WriteLine("[B] Back");
+                Console.WriteLine("-----------------------------");
+
                 int index = 0;
                 List<Dragon> indexedDragons = [];
-                foreach (var habitat in gameData.Habitats)
+                foreach (var habitat in gameData?.Habitats ?? Enumerable.Empty<Habitat>())
                 {
                     foreach (var dragon in habitat.Occupants)
                     {
@@ -627,42 +512,51 @@ Feed Dragons
                         {
                             Console.WriteLine($"{index + 1}. {dragon.Name} - {dragon.FormalName} [lvl 20] (MAX)");
                         }
-                            index++;
+                        index++;
                     }
                 }
 
                 Console.Write("\nChoice> ");
                 string choice = Console.ReadLine()?.Trim().ToLower();
 
-                if (choice == "b")
-                {
-                    viewing = false;
-                    break;
-                }
+                if (choice == "b") { viewing = false; break; }
 
-                if (int.TryParse(choice, out int position))
+                if (choice?.StartsWith("remove") ?? false)
                 {
-                    if(position > 0 && position < indexedDragons.Count + 1)
+                    if (int.TryParse(choice.AsSpan(7), out int pos) && pos > 0 && pos <= indexedDragons.Count)
                     {
-                        var dragon = indexedDragons[position - 1];
-                        if (gameData.Food >= dragon.FoodPerPress)
-                        {
-                            if(dragon.Level < 20)
-                            {
-                                dragon.Feed();
-                                gameData.Food -= dragon.FoodPerPress;
-                                Console.WriteLine("Dragon Fed! Press any key to continue");
-                                Console.ReadKey();
-                            }
+                        var dragon = indexedDragons[pos - 1];
+                        bool isBreeding = dragon.Id == gameData?.UserBreedingCave.Dragon1?.Id ||
+                                          dragon.Id == gameData?.UserBreedingCave.Dragon2?.Id;
 
+                        if (!isBreeding)
+                        {
+                            foreach (var habitat in gameData?.Habitats ?? Enumerable.Empty<Habitat>())
+                                habitat.Occupants.Remove(dragon);
+                            gameData?.Dragons.RemoveAll(d => d.Id == dragon.Id);
+                            Helper.WriteLineColored("Dragon has been removed! Press any key to continue...", ConsoleColor.DarkYellow);
                         }
                         else
                         {
-                            Console.WriteLine("Not Enough Food to Feed this Dragon! Press any key to continue.");
-                            Console.ReadKey();
-
+                            Helper.WriteLineColored("Dragon is on the Breeding Cave right now! It cannot be removed. Press any key to continue.", ConsoleColor.DarkRed);
                         }
+                        Console.ReadKey();
                     }
+                }
+                if(int.TryParse(choice, out int position) && position > 0 && position <= indexedDragons.Count)
+                {
+                    var dragon = indexedDragons[position - 1];
+                    if (gameData?.Food < dragon.FoodPerPress)
+                    {
+                        Helper.WriteLineColored("Not Enough Food to Feed this Dragon! Press any key to continue.", ConsoleColor.DarkRed);
+                    }
+                    else if (dragon.Level < 20)
+                    {
+                        dragon.Feed();
+                        if (gameData is not null) { gameData.Food -= dragon.FoodPerPress; }
+                        Helper.WriteLineColored("Dragon Fed! Press any key to continue", ConsoleColor.Green);
+                    }
+                    Console.ReadKey();
                 }
             }
         }
@@ -672,16 +566,16 @@ Feed Dragons
             while (viewing)
             {
                 Console.Clear();
-                Console.Write(@"
-Manage Habitats
-------------------------------------------
-[1...] Update or Collect Build/Update XP
-[C] Collect all Gold.
-[B] Back
-[Any Key] Refresh
-------------------------------------------
-");
-                for(int i = 0; i < gameData.Habitats.Count; i++)
+                Console.WriteLine("Manage Habitats");
+                Console.WriteLine("------------------------------------------");
+                Helper.WriteLineColored($"GOLD: {gameData?.Gold}", ConsoleColor.Yellow);
+                Console.WriteLine("[1...] Update or Collect Build/Update XP");
+                Console.WriteLine("[C] Collect all Gold.");
+                Console.WriteLine("[B] Back");
+                Console.WriteLine("[Any Key] Refresh");
+                Console.WriteLine("------------------------------------------");
+
+                for (int i = 0; i < gameData?.Habitats.Count; i++)
                 {
                     Habitat habitat = gameData.Habitats[i];
                     TimeSpan timeSinceLastCollected = habitat.GoldLastCollected.HasValue
@@ -701,25 +595,23 @@ Manage Habitats
                     {
                         habitat.Gold = totalGold;
                     }
-                    // Habitat is being built.
                     if((habitat.BuildingTime is not null) && (habitat.Level == 1))
                     {
                         var remainingTime = habitat.BuildingTime - DateTime.Now;
                         if(remainingTime.Value.TotalSeconds <= 0)
                         {
-                            Console.WriteLine($"{i + 1}. {habitat.Name} Habitat. (DONE BUILDING)");
+                            Helper.WriteLineColored($"{i + 1}. {habitat.Name} Habitat. (DONE BUILDING)", ConsoleColor.Green);
                         } else
                         {
                             Console.WriteLine($"{i + 1}. {habitat.Name} Habitat. (Building... {remainingTime.Value.Humanize(maxUnit: TimeUnit.Hour, minUnit: TimeUnit.Second, precision: 3)})");
                         }
                     } 
-                    //Habitat is being updated.
                     else if((habitat.BuildingTime is not null) && (habitat.Level == 2))
                     {
                         var remainingTime = habitat.BuildingTime - DateTime.Now;
                         if(remainingTime.Value.TotalSeconds <= 0)
                         {
-                            Console.WriteLine($"{i + 1}. {habitat.Name} Habitat. (DONE UPGRADING)");
+                            Helper.WriteLineColored($"{i + 1}. {habitat.Name} Habitat. (DONE UPGRADING)", ConsoleColor.Green);
                         } else
                         {
                             Console.WriteLine($"{i + 1}. {habitat.Name} Habitat. (Updating... {remainingTime.Value.Humanize(maxUnit: TimeUnit.Hour, minUnit: TimeUnit.Second, precision: 3)})");
@@ -727,103 +619,84 @@ Manage Habitats
 
                     } else
                     {
-                        Console.WriteLine($"{i + 1}. {habitat.Name} Habitat. ({habitat.Occupants.Count}/{habitat.MaxCapacity}) - GOLD: ({habitat.Gold}/{habitat.MaxGoldCapacity})");
+                        if(habitat.Level == 1)
+                        {
+                            Console.WriteLine($"{i + 1}. {habitat.Name} Habitat. ({habitat.Occupants.Count}/{habitat.MaxCapacity}) - ");
+                            Helper.WriteLineColored($"GOLD: ({habitat.Gold}/{habitat.MaxGoldCapacity}) UPDATE: {Helper.AllHabitats[habitat.Name].UpdateCost}g", ConsoleColor.Yellow);
+                        } else
+                        {
+                            Console.WriteLine($"{i + 1}. {habitat.Name} Habitat. ({habitat.Occupants.Count}/{habitat.MaxCapacity}) - ");
+                            Helper.WriteLineColored($"GOLD: ({habitat.Gold}/{habitat.MaxGoldCapacity})", ConsoleColor.Yellow);
+                        }
                     }
                 }
                 Console.Write("\nChoice> ");
                 string choice = Console.ReadLine()?.Trim().ToLower();
 
-                if(choice == "b")
-                {
-                    viewing = false;
-                    break;
-                }
+                if(choice == "b") { viewing = false; break; }
 
                 if(choice == "c")
                 {
                     int gold = 0;
-                    foreach(var habitat in gameData.Habitats)
-                    {
-                        gold += habitat.RetrieveGold();
-                    }
-                    Console.WriteLine($"{gold} has been collected! Press any key to continue.");
+                    foreach(var habitat in gameData.Habitats) { gold += habitat.RetrieveGold(); }
+                    Helper.WriteLineColored($"{gold}g has been collected! Press any key to continue.", ConsoleColor.Green);
                     Console.ReadKey();
                 }
 
-                if (int.TryParse(choice, out int position))
+                if (int.TryParse(choice, out int position) && position > 0 && position < gameData.Habitats.Count + 1)
                 {
-                    if(position > 0 && position < gameData.Habitats.Count + 1)
+                    var habitat = gameData.Habitats[position - 1];
+                    var habitatInfo = Helper.AllHabitats[habitat.Name ?? ""];
+
+                    if (habitat.BuildingTime is not null)
                     {
-                        // Check if habitat is done updating to collect XP
-                        Habitat habitat = gameData.Habitats[position - 1];
-                        if(habitat.BuildingTime is not null)
+                        if (habitat.BuildingTime <= DateTime.Now)
                         {
-                            // Not null, so either built or building
-                            if(habitat.BuildingTime <= DateTime.Now)
+                            int gainedXP = habitat.Level switch
                             {
-                                // Is done building
-                                switch (habitat.Level)
-                                {
-                                    case 1:
-                                        gameData.CurrentXP += AllHabitats[habitat.Name].BuildXP;
-                                        CheckLevel();
-                                        Console.WriteLine($"You collected {AllHabitats[habitat.Name].BuildXP} XP! Press any key to continue.");
-                                        break;
-                                    case 2:
-                                        gameData.CurrentXP += AllHabitats[habitat.Name].UpdateXP;
-                                        CheckLevel();
-                                        Console.WriteLine($"You collected {AllHabitats[habitat.Name].UpdateXP} XP! Press any key to continue.");
-                                        break;
-                                }
-                                habitat.BuildingTime = null;
-                                Console.ReadKey();
-                            } else
-                            {
-                                Console.WriteLine("Habitat is still building/updating... Press any key to continue");
-                                Console.ReadKey();
-                            }
-                        } else
+                                1 => habitatInfo.BuildXP,
+                                2 => habitatInfo.UpdateXP,
+                                _ => 0
+                            };
+
+                            gameData.CurrentXP += gainedXP; CheckLevel();
+                            Helper.WriteLineColored($"You collected {gainedXP} XP! Press any key to continue.", ConsoleColor.Green);
+                            habitat.BuildingTime = null;
+                        }
+                        else
                         {
-                            // Due Date is null so Try to upgrade.
-                            if(habitat.Level < 2)
-                            {
-                                // See if user can afford upgrade
-                                if(gameData.Gold >= AllHabitats[habitat.Name].UpdateCost)
-                                {
-                                    habitat.Level = 2;
-                                    habitat.BuildingTime = DateTime.Now + AllHabitats[habitat.Name].UpdateDuration;
-                                    gameData.Gold -= AllHabitats[habitat.Name].UpdateCost;
-                                    Console.WriteLine("Habitat is now upgrading... Press any key to continue.");
-                                    Console.ReadKey();
-                                }
-                            } else
-                            {
-                                Console.WriteLine("Habitat is Max Level! Press any key to continue.");
-                                Console.ReadKey();
-                            }
+                            Helper.WriteLineColored("Habitat is still building/updating... Press any key to continue.", ConsoleColor.DarkRed);
+                        }
+                        Console.ReadKey();
+                    }
+                    if (habitat.Level < 2)
+                    {
+                        if (gameData.Gold >= habitatInfo.UpdateCost)
+                        {
+                            habitat.Level = 2;
+                            habitat.BuildingTime = DateTime.Now + habitatInfo.UpdateDuration;
+                            gameData.Gold -= habitatInfo.UpdateCost;
+                            Helper.WriteLineColored("Habitat is now upgrading... Press any key to continue.", ConsoleColor.DarkCyan);
                         }
                     }
+                    else
+                    {
+                        Helper.WriteLineColored("Habitat is Max Level! Press any key to continue.", ConsoleColor.DarkRed);
+                    }
+                    Console.ReadKey();
                 }
-
-
             }
         }
         public static void ViewBreedingCave()
         {
-
-            Dragon? dragon1 = null;
-            Dragon? dragon2 = null;
-            int dragonIndex = 1;
-
+            Dragon dragon1 = null; Dragon dragon2 = null; int dragonIndex = 1;
             bool viewing = true;
             while (viewing)
             {
                 Console.Clear();
-                Console.Write(@"
-Breeding Cave
----------------------------
-");
-                if( (gameData.UserBreedingCave.Dragon1 is not null) && (gameData.UserBreedingCave.Dragon2 is not null))
+                Console.WriteLine("Breeding Cave");
+                Console.WriteLine("-----------------------------------");
+                if( (gameData?.UserBreedingCave.Dragon1 is not null) && (gameData.UserBreedingCave.Dragon2 is not null))
                 {
                     // Display Progress and try to get Egg
                     Console.WriteLine("[P] Try to pick up Egg\n[B] Back");
@@ -839,37 +712,35 @@ Breeding Cave
                     Console.Write("Choice>");
 
                     string choice = Console.ReadLine()?.Trim().ToLower();
-                    if(choice == "b")
-                    {
-                        viewing = false;
-                        break;
-                    }
+                    if(choice == "b") { viewing = false; break; }
                     else if(choice == "p")
                     {
                         if(timeLeft.TotalSeconds <= 0)
                         {
                             if(gameData.UserHatchery.Eggs.Count < 4)
                             {
-                                gameData.UserHatchery.Eggs.Add(gameData.UserBreedingCave.BreedOutcome);
-                                Console.WriteLine($"A new {gameData.UserBreedingCave.BreedOutcome.DragonName} has been placed in the Hatchery! Press any key to exit."); ;
-                                gameData.UserBreedingCave.Dragon1 = null;
-                                gameData.UserBreedingCave.Dragon2 = null;
-                                gameData.UserBreedingCave.DueDate = null;
-                                gameData.UserBreedingCave.BreedOutcome = null;
-                                Console.ReadKey();
-                                viewing = false;
-                                break;
+                                gameData.UserHatchery.Eggs.Add(gameData?.UserBreedingCave.BreedOutcome ?? new EarthEgg());
+                                if (gameData is not null && gameData.UserBreedingCave is not null && gameData.UserBreedingCave.BreedOutcome is not null)
+                                {
+                                    gameData.UserBreedingCave.BreedOutcome.HatchingTime = DateTime.Now + gameData.UserBreedingCave.BreedOutcome.HatchingDuration;
+                                    Helper.WriteLineColored($"A new {gameData?.UserBreedingCave?.BreedOutcome?.DragonName} has been placed in the Hatchery! Press any key to exit.", ConsoleColor.Green);
+                                    gameData.UserBreedingCave.Dragon1 = null;
+                                    gameData.UserBreedingCave.Dragon2 = null;
+                                    gameData.UserBreedingCave.DueDate = null;
+                                    gameData.UserBreedingCave.BreedOutcome = null;
+                                }
+                                Console.ReadKey(); viewing = false; break;
                             }
                             else
                             {
-                                Console.WriteLine("Hatchery is full! Hatch some eggs first. Press any key to continue.");
+                                Helper.WriteLineColored("Hatchery is full! Hatch some eggs first. Press any key to continue.", ConsoleColor.DarkRed);
                                 Console.ReadKey();
                             }
                             
                         }
                         else
                         {
-                            Console.WriteLine("Egg is not ready yet! Press any key to continue.");
+                            Helper.WriteLineColored("Egg is not ready yet! Press any key to continue.", ConsoleColor.DarkRed);
                             Console.ReadKey();
                         }
                     }
@@ -880,9 +751,7 @@ Breeding Cave
                     Console.WriteLine("---------------------------");
                     if (dragon1 is not null) Console.WriteLine($"Dragon 1: {dragon1.Name} - {dragon1.FormalName}");
                     Console.WriteLine($"Select Dragon {dragonIndex}: ");
-                    List<Dragon> validDragons = gameData.Dragons
-                    .Where(dragon => dragon.Level >= 4 && (dragon1 == null || dragon != dragon1))
-                    .ToList();
+                    List<Dragon> validDragons = [.. gameData.Dragons.Where(dragon => dragon.Level >= 4 && (dragon1 == null || dragon != dragon1))];
                     for (int i = 0; i < validDragons.Count; i++)
                     {
                         Dragon dragon = validDragons[i];
@@ -897,261 +766,61 @@ Breeding Cave
                     Console.Write("\nChoice> ");
                     string choice = Console.ReadLine()?.Trim().ToLower();
 
-                    if (choice == "b")
+                    if (choice == "b") { dragon1 = dragon2 = null; viewing = false; break; }
+                    if (int.TryParse(choice, out int position) && position > 0 && position <= validDragons.Count)
                     {
-                        dragon1 = dragon2 = null;
-                        viewing = false;
-                        break;
-                    }
-                    if (int.TryParse(choice, out int position))
-                    {
-                        if (position > 0 && position < validDragons.Count + 1)
+                        var selectedDragon = validDragons[position - 1];
+                        if (dragon1 is null)
                         {
-                            var dragon = validDragons[position - 1];
-                            if (dragon1 is null)
-                            {
-                                dragonIndex++;
-                                dragon1 = validDragons[position - 1];
-                            } else
-                            {
-                                // Selecting dragon 2 consult the opposites table to deny otherwise calculate offspring.
-                                dragon2 = validDragons[position - 1];
-                                dragonIndex++;
-                                gameData.UserBreedingCave.Dragon1 = dragon1;
-                                gameData.UserBreedingCave.Dragon2 = dragon2;
+                            dragon1 = selectedDragon;
+                            dragonIndex++;
+                        }
+                        else
+                        {
+                            dragon2 = selectedDragon;
+                            dragonIndex++;
 
-                                // Pick egg and edit properties
-                                gameData.UserBreedingCave.BreedOutcome = Breed(dragon1, dragon2);
-                                gameData.UserBreedingCave.DueDate = DateTime.Now + gameData.UserBreedingCave.BreedOutcome.BreedingTime;
-                                Console.WriteLine($"Dragons are breeding! Breeding will take: {gameData.UserBreedingCave.BreedOutcome.BreedingTime.Humanize(minUnit:TimeUnit.Second, maxUnit:TimeUnit.Hour, precision:3)}. Press any key to exit");
-                                Console.ReadKey();
-                            }
+                            gameData.UserBreedingCave.Dragon1 = dragon1;
+                            gameData.UserBreedingCave.Dragon2 = dragon2;
+
+                            var outcome = Helper.Breed(dragon1, dragon2);
+                            gameData.UserBreedingCave.BreedOutcome = outcome;
+                            gameData.UserBreedingCave.DueDate = DateTime.Now + outcome.BreedingTime;
+
+                            Helper.WriteLineColored($"Dragons are breeding! Breeding will take: {outcome.BreedingTime.Humanize(minUnit: TimeUnit.Second, maxUnit: TimeUnit.Hour, precision: 3)}. Press any key to exit", ConsoleColor.Green);
+                            Console.ReadKey();
                         }
                     }
+
                 }
             }
         }
-        public static Egg Breed(Dragon dragon1, Dragon dragon2)
-        {
-            Random random = new Random();
-            Egg outcome = null;
-            string element1 = "";
-            string element2 = "";
-
-            bool isLegendary1 = dragon1.Elements.Contains("Legendary");
-            bool isLegendary2 = dragon2.Elements.Contains("Legendary");
-
-            bool isRare1 = dragon1.IsRare;
-            bool isRare2 = dragon2.IsRare;
-
-            // Both Legendary: return random Legendary dragon
-            if (isLegendary1 && isLegendary2)
-            {
-                int randomIndex = random.Next(BreedingCave.LegendaryDragons.Count);
-                outcome = BreedingCave.LegendaryDragons[randomIndex]();
-            }
-            // Only one is Legendary: use elements from the non-Legendary dragon
-            else if (isLegendary1 || isLegendary2)
-            {
-                Dragon nonLegendary = isLegendary1 ? dragon2 : dragon1;
-
-                // Ensure at least 2 elements to choose from
-                var elements = new List<string>(nonLegendary.Elements);
-                if (elements.Count < 2)
-                {
-                    // Duplicate element if only one is available
-                    elements.Add(elements[0]);
-                }
-
-                // Shuffle and pick two elements randomly
-                elements = elements.OrderBy(_ => random.Next()).ToList();
-                element1 = elements[0];
-                element2 = elements[1];
-
-                // Lookup result (assuming you have a method like this)
-                outcome = BreedingCave.RegularBreedingTable[element1][element2]();
-            }
-            else if (isRare1 && isRare2)
-            {
-                int pick = random.Next(100);
-                // Legendary outcome
-                if (pick > 90)
-                {
-                    int randomIndex = random.Next(BreedingCave.LegendaryDragons.Count);
-                    outcome = BreedingCave.LegendaryDragons[randomIndex]();
-                }
-                else
-                {
-                    if (dragon1.Level >= 10 && dragon2.Level >= 10)
-                    {
-                        BreedSpecially();
-                    }
-                    else
-                    {
-                        BreedRegularly();
-                    }
-                }
-            }
-            else
-            {
-                if (dragon1.Level >= 10 && dragon2.Level >= 10)
-                {
-                    BreedSpecially();
-                }
-                else
-                {
-                    BreedRegularly();
-                }
-            } 
-            void BreedSpecially()
-            {
-                int pick = Convert.ToInt32(random.NextInt64(100));
-                if(pick < 75)
-                {
-                    BreedRegularly();
-                } else
-                {
-                    element1 = dragon1.Elements[random.Next(dragon1.Elements.Count)];
-                    element2 = dragon2.Elements[random.Next(dragon2.Elements.Count)];
-                    // Check if entry for these elements exists.
-                    if(BreedingCave.SpecialBreedingTable.ContainsKey(element1) && BreedingCave.SpecialBreedingTable[element1].ContainsKey(element2))
-                    {
-                        outcome = BreedingCave.SpecialBreedingTable[element1][element2]();
-                    } else
-                    {
-                        outcome = BreedingCave.RegularBreedingTable[element1][element2]();
-                    }
-                }              
-            }
-            void BreedRegularly()
-            {
-                element1 = dragon1.Elements[random.Next(dragon1.Elements.Count)];
-                element2 = dragon2.Elements[random.Next(dragon2.Elements.Count)];
-                outcome = BreedingCave.RegularBreedingTable[element1][element2]();
-            }
-            return outcome;
-        }
+        
         public static void CheckLevel()
-        {
-            while(gameData.CurrentXP > xpThresholds[gameData.Level - 1])
+        { 
+            if(gameData.CurrentXP > Helper.xpThresholds.Last())
             {
-                Console.WriteLine($"New Level achieved! Level: {++gameData.Level}");
+                if (gameData.Level == 50) return; // This is not the first time user reaches lvl 50, ignore.
+                gameData.Level = 50; gameData.CurrentXP = Helper.xpThresholds.Last();
+                Helper.WriteLineColored("You reached Max Level: 50", ConsoleColor.Green);
+                return;
+            }
+            while(gameData.CurrentXP > Helper.xpThresholds[gameData.Level - 1])
+            {
+                Helper.WriteLineColored($"New Level achieved! Level: {++gameData.Level}", ConsoleColor.DarkCyan);
             }
         }
-
-        public static Dictionary<string, HabitatInfo> AllHabitats = new()
+        public static void SaveAndExit()
         {
-            ["Earth"] = new HabitatInfo
+            var options = new Newtonsoft.Json.JsonSerializerSettings
             {
-                DisplayName = "Terra Habitat",
-                Cost = 100,
-                BuildDuration = TimeSpan.FromSeconds(10),
-                UpdateDuration = TimeSpan.FromSeconds(30),
-                BuildXP = 100,
-                UpdateXP = 2500,
-                UpdateCost = 25000,
-                CreateHabitat = () => new EarthHabitat()
-            },
-            ["Fire"] = new HabitatInfo
-            {
-                DisplayName = "Fire",
-                Cost = 150,
-                BuildDuration = TimeSpan.FromSeconds(15),
-                UpdateDuration = TimeSpan.FromHours(2),
-                BuildXP = 230,
-                UpdateXP = 25000,
-                UpdateCost = 50000,
-                CreateHabitat = () => new FireHabitat()
-            },
-            ["Water"] = new HabitatInfo
-            {
-                DisplayName = "Water",
-                Cost = 500,
-                BuildDuration = TimeSpan.FromSeconds(30),
-                UpdateDuration = TimeSpan.FromHours(2.5),
-                BuildXP = 500,
-                UpdateXP = 75000,
-                UpdateCost = 100000,
-                CreateHabitat = () => new WaterHabitat()
-            },
-            ["Nature"] = new HabitatInfo
-            {
-                DisplayName = "Nature",
-                Cost = 1500,
-                BuildDuration = TimeSpan.FromHours(1),
-                UpdateDuration = TimeSpan.FromHours(3),
-                BuildXP = 1500,
-                UpdateXP = 125000,
-                UpdateCost = 125000,
-                CreateHabitat = () => new NatureHabitat()
-            },
-            ["Electric"] = new HabitatInfo
-            {
-                DisplayName = "Electric",
-                Cost = 30000,
-                BuildDuration = TimeSpan.FromHours(2),
-                UpdateDuration = TimeSpan.FromHours(8),
-                BuildXP = 20000,
-                UpdateXP = 250000,
-                UpdateCost = 250000,
-                CreateHabitat = () => new ElectricHabitat()
-            },
-            ["Ice"] = new HabitatInfo
-            {
-                DisplayName = "Ice",
-                Cost = 75000,
-                BuildDuration = TimeSpan.FromHours(2.5),
-                UpdateDuration = TimeSpan.FromHours(12),
-                BuildXP = 50000,
-                UpdateXP = 500000,
-                UpdateCost = 1000000,
-                CreateHabitat = () => new IceHabitat()
-            },
-            ["Metal"] = new HabitatInfo
-            {
-                DisplayName = "Metal",
-                Cost = 100000,
-                BuildDuration = TimeSpan.FromHours(3),
-                UpdateDuration = TimeSpan.FromHours(18),
-                BuildXP = 100000,
-                UpdateXP = 1000000,
-                UpdateCost = 2000000,
-                CreateHabitat = () => new MetalHabitat()
-            },
-            ["Dark"] = new HabitatInfo
-            {
-                DisplayName = "Dark",
-                Cost = 500000,
-                BuildDuration = TimeSpan.FromHours(4),
-                UpdateDuration = TimeSpan.FromHours(24),
-                BuildXP = 250000,
-                UpdateXP = 1500000,
-                UpdateCost = 3000000,
-                CreateHabitat = () => new DarkHabitat()
-            },
-            ["Legendary"] = new HabitatInfo
-            {
-                DisplayName = "Legendary",
-                Cost = 1500000,
-                BuildDuration = TimeSpan.FromHours(8),
-                UpdateDuration = TimeSpan.FromHours(30),
-                BuildXP = 5000000,
-                UpdateXP = 7000000,
-                UpdateCost = 9000000,
-                CreateHabitat = () => new LegendaryHabitat()
-            },
-            ["Pure"] = new HabitatInfo
-            {
-                DisplayName = "Pure",
-                Cost = 700000,
-                BuildDuration = TimeSpan.FromHours(6),
-                UpdateDuration = TimeSpan.FromHours(30),
-                BuildXP = 3750000,
-                UpdateXP = 4750000,
-                UpdateCost = 4200000,
-                CreateHabitat = () => new PureHabitat()
-            }
-        };
-
+                Formatting = Newtonsoft.Json.Formatting.Indented,
+                TypeNameHandling = Newtonsoft.Json.TypeNameHandling.Auto
+            };
+            string json = Newtonsoft.Json.JsonConvert.SerializeObject(gameData, options);
+            File.WriteAllText(SAVE_FILENAME, json);
+            Helper.WriteLineColored("Game saved... Press any key to quit the game", ConsoleColor.Green);
+            Environment.Exit(0);
+        }
     }
 }

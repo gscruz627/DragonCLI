@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace DragonCLI
 {
-    class HabitatInfo
+    public class HabitatInfo
     {
         public Func<Habitat> CreateHabitat { get; set; }
         public string DisplayName { get; set; }

@@ -10,7 +10,7 @@ namespace DragonCLI
     {
         public string FarmType { get; set; }
         public List<Crop> AvailableCrops { get; set; }
-        public Crop? CurrentCrop { get; set; }
+        public Crop CurrentCrop { get; set; }
         public DateTime? DueDateTime { get; set; }
         public Farm()
         {
@@ -65,7 +65,6 @@ namespace DragonCLI
                     return false;
                 } 
             }
-            return false;
         }
         public void Grow(int index)
         {

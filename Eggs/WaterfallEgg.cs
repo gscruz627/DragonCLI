@@ -1,11 +1,3 @@
-﻿using DragonCLI.Dragons;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using DragonCLI.Dragons;
-
 namespace DragonCLI.Eggs
 {
     public class WaterfallEgg : Egg
@@ -14,8 +6,8 @@ namespace DragonCLI.Eggs
         {
             DragonName = "Waterfall Dragon Egg";
             Elements = ["Earth", "Water"];
-            HatchingTime = DateTime.Now.AddHours(4);
-            TargetDragon = (name) => new WaterfallDragon(name);
+            HatchingDuration = TimeSpan.FromHours(4);
+TargetDragonClassName = "Dragons.WaterfallDragon";
             Cost = Int32.MaxValue;
             HatchXP = 100;
             BreedingTime = TimeSpan.FromHours(4);

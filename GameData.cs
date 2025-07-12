@@ -19,24 +19,55 @@ namespace DragonCLI
         public List<Habitat> Habitats { get; set; }
         public List<Farm> Farms { get; set; }
         public Hatchery UserHatchery { get; set; }
+        public Dictionary<string, bool> DiscoveredDragons { get; set; }
 
-        public DateTime LastUpdated {  get; set; }
-
+        public DateTime LastUpdated { get; set; }
         public GameData()
+        {
+
+        }
+
+        public void InitializeNewGame()
         {
             Gold = 10000000;
             Level = 1;
             Food = 10000000;
             CurrentXP = 0;
             UserBreedingCave = new BreedingCave();
-            Dragon initialDragon = new EarthDragon(Dragon.GetRandomName());
-            Dragons = [initialDragon];
-            Habitat initialHabitat = new EarthHabitat();
-            initialHabitat.Occupants.Add(initialDragon);
-            Habitats = [initialHabitat];
             Farms = [];
             UserHatchery = new Hatchery();
             LastUpdated = DateTime.Now;
+            DiscoveredDragons = [];
+
+            // Try to populate the book of dragons.
+            var dragonType = typeof(Dragon);
+
+            var allDragonTypes = AppDomain.CurrentDomain.GetAssemblies()
+                .SelectMany(asm => asm.GetTypes())
+                .Where(t => !t.IsAbstract && dragonType.IsAssignableFrom(t));
+
+            foreach (var type in allDragonTypes)
+            {
+                try
+                {
+                    var instance = (Dragon)Activator.CreateInstance(type, "");
+                    string formalName = instance.FormalName;
+
+                    if (!DiscoveredDragons.ContainsKey(formalName))
+                    {
+                        DiscoveredDragons[formalName] = false;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    {
+                        Console.WriteLine("Failed to initialize Book of dragons. Error: " + ex.Message + " Failing...");
+                        Environment.Exit(0);
+                    }
+                }
+            }
+            DiscoveredDragons["Earth Dragon"] = true;
+
         }
     }
 }

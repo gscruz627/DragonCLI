@@ -9,8 +9,9 @@ namespace DragonCLI
 {
     public abstract class Dragon
     {
-        public string? Name { get; set; }
-        public List<string>? Elements { get; set; }
+        public Guid Id { get; set; } = Guid.NewGuid();
+        public string Name { get; set; }
+        public List<string> Elements { get; set; }
         public int Level { get; set; }
         public int GoldRate { get; set; }
         /*
@@ -20,12 +21,11 @@ namespace DragonCLI
         public int FoodLevelMax { get; set; }
         public int FoodPerPress { get; set; }
 
-        public string? FormalName { get; set; }
+        public string FormalName { get; set; }
 
         public bool IsRare { get; set; }
 
-        public List<Attack>? Attacks { get; set; }
-        public static Dictionary<int, int> FoodTable = new Dictionary<int,int>()
+        public static Dictionary<int, int> FoodTable = new()
         {
             {5,20 },{10,40 }, {20,80},{40,160},
             {80,320 },{160,640},{320,1280},{640,2560},
