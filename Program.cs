@@ -43,7 +43,7 @@ namespace DragonCLI
                 Dragon initialDragon = new EarthDragon(Dragon.GetRandomName());
                 gameData.Dragons = [initialDragon];
                 Habitat initialHabitat = EarthHabitat.CreateDefault();
-                initialHabitat.Occupants.Add(initialDragon);
+                initialHabitat.Occupants.Add(initialDragon.Id);
                 gameData.Habitats = [initialHabitat];
                 Console.WriteLine("No Saved Data Found, Starting a new Game...");
             }
@@ -59,7 +59,7 @@ namespace DragonCLI
             Console.WriteLine("Welcome to Dragon CLI Game");
             Console.WriteLine("---------------------------");
             Console.WriteLine(gameData.Level < 50
-                ? $"LVL {gameData.Level} ({gameData.CurrentXP}/{Helper.xpThresholds[gameData.Level - 1]})"
+                ? $"LVL {gameData.Level} ({gameData.CurrentXP}/{Helper.xpThresholds[gameData.Level - 1]} xp)"
                 : $"LVL {gameData.Level}");
             Helper.WriteLineColored($"GOLD: {gameData.Gold}g", ConsoleColor.Yellow);
             Helper.WriteLineColored($"FOOD: {gameData.Food}f", ConsoleColor.Red);
@@ -141,6 +141,7 @@ namespace DragonCLI
                             if(gameData.Farms.Count < farmsLimit)
                             {
                                 var farm = new Farm();
+                                farm.AvailableCrops = Farm.InitialFarmConfiguration();
                                 Helper.WriteLineColored($"You Purchased a new Farm! Press any key to exit.", ConsoleColor.Green);
                                 gameData.Farms.Add(farm); gameData.Gold -= 100; gameData.CurrentXP += 100; CheckLevel();
                                 Console.ReadKey();
@@ -152,7 +153,7 @@ namespace DragonCLI
 
                         } else
                         {
-                            Console.WriteLine("You don't have enough gold to purchase a farm! Press any key to continue");
+                            Helper.WriteLineColored("You don't have enough gold to purchase a farm! Press any key to continue", ConsoleColor.DarkRed);
                             Console.ReadKey();
                         }
                             break;
@@ -171,14 +172,14 @@ namespace DragonCLI
                 Console.Clear();
                 Console.WriteLine("Egg Store");
                 Console.WriteLine("-------------------------");
-                Helper.WriteColored($"GOLD: {gameData?.Gold}g", ConsoleColor.Yellow);
+                Helper.WriteLineColored($"GOLD: {gameData?.Gold}g", ConsoleColor.Yellow);
                 Console.WriteLine("[1...] Selection");
                 Console.WriteLine("[B] Back");
                 Console.WriteLine("-------------------------");
                 for (int i = 0; i < availableEggs.Count; i++)
                 {
                     Console.Write($"{i + 1}. {availableEggs.ElementAt(i).Key} Dragon Egg");
-                    Helper.WriteLineColored($"{availableEggs.ElementAt(i).Value}g)", ConsoleColor.Yellow);
+                    Helper.WriteLineColored($" ({availableEggs.ElementAt(i).Value}g)", ConsoleColor.Yellow);
                 }
                 Console.Write("\nChoice> ");
                 string choice = Console.ReadLine()?.Trim().ToLower();
@@ -233,7 +234,7 @@ namespace DragonCLI
                 Console.Clear();
                 Console.WriteLine("Habitat Store");
                 Console.WriteLine("-------------------------");
-                Helper.WriteColored($"GOLD: {gameData?.Gold}g - Habitat Count: {gameData?.Habitats.Count}/{habitatLimit}", ConsoleColor.Yellow);
+                Helper.WriteLineColored($"GOLD: {gameData?.Gold}g - Habitat Count: {gameData?.Habitats.Count}/{habitatLimit}", ConsoleColor.Yellow);
                 Console.WriteLine("[1...] Selection");
                 Console.WriteLine("[B] Back");
                 Console.WriteLine("-------------------------");
@@ -242,8 +243,8 @@ namespace DragonCLI
                 {
                     var info = kv.Value;
                     Console.Write($"{idx++}. {info.DisplayName} Habitat - ");
-                    Helper.WriteColored("Cost: {info.Cost} Gold", ConsoleColor.Yellow);
-                    Console.WriteLine($", Build Time: {info.BuildDuration.Humanize(precision: 1)}");
+                    Helper.WriteColored($"Cost: {info.Cost} Gold", ConsoleColor.Yellow);
+                    Console.WriteLine($", Build Time: {info.BuildDuration.Humanize(minUnit: TimeUnit.Hour, maxUnit: TimeUnit.Second, precision: 3)}");
                 }
                 Console.Write("\nChoice> ");
                 string choice = Console.ReadLine()?.Trim().ToLower();
@@ -261,7 +262,7 @@ namespace DragonCLI
                             gameData.Gold -= habitatInfo.Cost;
                             gameData.Habitats.Add(habitat);
                             Helper.WriteLineColored($"You Purchased: {habitatInfo.DisplayName} Habitat (Ready in {habitatInfo.BuildDuration.Humanize(precision: 1)}). Press any key to continue.", ConsoleColor.Green);
-                            viewing = false; break;
+                            Console.ReadKey(); viewing = false; break;
                         }
                         else
                         {
@@ -351,7 +352,8 @@ namespace DragonCLI
                     string name = Console.ReadLine()?.Trim().ToLower();
                     gameData?.UserHatchery.Eggs.Remove(egg);
                     Dragon dragon = egg.Hatch(!string.IsNullOrEmpty(name) ? name : Dragon.GetRandomName());
-                    compatibleHabitats[position - 1].Occupants.Add(dragon);
+
+                    compatibleHabitats[position - 1].Occupants.Add(dragon.Id);
                     if (dragon?.FormalName != null && (gameData?.DiscoveredDragons.ContainsKey(dragon.FormalName) ?? false))
                     { gameData!.DiscoveredDragons[dragon.FormalName] = true; }
                     if (dragon != null) { gameData?.Dragons.Add(dragon); }
@@ -390,10 +392,16 @@ namespace DragonCLI
                         TimeSpan diff = due.Value - DateTime.Now;
                         producingLine = $"[PRODUCING {crop.Name}, Due In: {diff.Humanize(minUnit: TimeUnit.Second, maxUnit: TimeUnit.Hour, precision: 3)}]";
                     }
-                    Console.Write($"{i+1}. {gameData.Farms[i].FarmType} {producingLine} ");
+                    if(producingLine == "[DONE]")
+                    {
+                        Helper.WriteColored($"{i + 1}. {gameData.Farms[i].FarmType} {producingLine}", ConsoleColor.Green);
+                    } else
+                    {
+                        Console.Write($"{i + 1}. {gameData.Farms[i].FarmType} {producingLine} ");
+                    }
                     switch (gameData.Farms[i].FarmType)
                     {
-                        case "Farm": Helper.WriteLineColored("UPDATE: 25000g", ConsoleColor.Yellow); break;
+                        case "Food Farm": Helper.WriteLineColored("UPDATE: 25000g", ConsoleColor.Yellow); break;
                         case "Big Food Farm": Helper.WriteLineColored("UPDATE: 250000g", ConsoleColor.Yellow); break;
                         default: Console.WriteLine(); break;
                     }
@@ -457,9 +465,9 @@ namespace DragonCLI
                     Crop crop = farm.AvailableCrops[i];
                     Console.Write($"{i + 1}. {crop.Name} ");
                     Helper.WriteColored($"({crop.Cost}g) ", ConsoleColor.Yellow);
-                    Helper.WriteColored($"[{crop.FoodAmount}f]", ConsoleColor.Red);
+                    Helper.WriteColored($"[{crop.FoodAmount}f] ", ConsoleColor.Red);
                     Console.Write($"in {crop.Duration.Humanize(minUnit: TimeUnit.Second, maxUnit: TimeUnit.Hour, precision: 3)}, ");
-                    Helper.WriteColored("Earn {crop.XPAmount} XP", ConsoleColor.Cyan);
+                    Helper.WriteLineColored($"Earn {crop.XPAmount} XP", ConsoleColor.Cyan);
                 }
                 Console.Write("\nChoice> ");
                 string choice = Console.ReadLine()?.Trim();
@@ -491,8 +499,7 @@ namespace DragonCLI
                 Console.Clear();
                 Console.WriteLine("Feed Dragons");
                 Console.WriteLine("-----------------------------");
-                Helper.WriteColored("FOOD: ", ConsoleColor.Red);
-                Console.WriteLine($"{gameData?.Food}");
+                Helper.WriteLineColored($"FOOD: {gameData?.Food}", ConsoleColor.Red);
                 Console.WriteLine("[1...] Feed (FoodPerClick) to Dragon");
                 Console.WriteLine("[Remove 1...] Remove this dragon.");
                 Console.WriteLine("[B] Back");
@@ -502,13 +509,15 @@ namespace DragonCLI
                 List<Dragon> indexedDragons = [];
                 foreach (var habitat in gameData?.Habitats ?? Enumerable.Empty<Habitat>())
                 {
-                    foreach (var dragon in habitat.Occupants)
+                    foreach (var dragonId in habitat.Occupants)
                     {
+                        Dragon dragon = gameData.Dragons.FirstOrDefault(d => d.Id == dragonId);
                         indexedDragons.Add(dragon);
                         if(dragon.Level < 20)
                         {
-                            Console.WriteLine($"{index + 1}. {dragon.Name} - {dragon.FormalName} [lvl {dragon.Level}] ({dragon.FoodLevel}/{dragon.FoodLevelMax}) +{dragon.FoodPerPress}");
-                        } else
+                            Console.WriteLine($"{index + 1}. {dragon.Name} - {dragon.FormalName} (E: {string.Join(", ", dragon.Elements)}) [lvl {dragon.Level}] ({dragon.FoodLevel}/{dragon.FoodLevelMax}) +{dragon.FoodPerPress}");
+                        }
+                        else
                         {
                             Console.WriteLine($"{index + 1}. {dragon.Name} - {dragon.FormalName} [lvl 20] (MAX)");
                         }
@@ -532,7 +541,7 @@ namespace DragonCLI
                         if (!isBreeding)
                         {
                             foreach (var habitat in gameData?.Habitats ?? Enumerable.Empty<Habitat>())
-                                habitat.Occupants.Remove(dragon);
+                                habitat.Occupants.Remove(dragon.Id);
                             gameData?.Dragons.RemoveAll(d => d.Id == dragon.Id);
                             Helper.WriteLineColored("Dragon has been removed! Press any key to continue...", ConsoleColor.DarkYellow);
                         }
@@ -584,8 +593,9 @@ namespace DragonCLI
 
                     int minutes = Convert.ToInt32(timeSinceLastCollected.TotalMinutes);
                     int totalGold = 0;
-                    foreach (var dragon in habitat.Occupants)
+                    foreach (var dragonId in habitat.Occupants)
                     {
+                        Dragon dragon = gameData.Dragons.FirstOrDefault(d => d.Id == dragonId);
                         totalGold += minutes * dragon.GoldRate;
                     }
                     if (totalGold > habitat.MaxGoldCapacity)
@@ -621,11 +631,11 @@ namespace DragonCLI
                     {
                         if(habitat.Level == 1)
                         {
-                            Console.WriteLine($"{i + 1}. {habitat.Name} Habitat. ({habitat.Occupants.Count}/{habitat.MaxCapacity}) - ");
+                            Console.Write($"{i + 1}. {habitat.Name} Habitat. ({habitat.Occupants.Count}/{habitat.MaxCapacity}) - ");
                             Helper.WriteLineColored($"GOLD: ({habitat.Gold}/{habitat.MaxGoldCapacity}) UPDATE: {Helper.AllHabitats[habitat.Name].UpdateCost}g", ConsoleColor.Yellow);
                         } else
                         {
-                            Console.WriteLine($"{i + 1}. {habitat.Name} Habitat. ({habitat.Occupants.Count}/{habitat.MaxCapacity}) - ");
+                            Console.Write($"{i + 1}. {habitat.Name} Habitat. ({habitat.Occupants.Count}/{habitat.MaxCapacity}) - ");
                             Helper.WriteLineColored($"GOLD: ({habitat.Gold}/{habitat.MaxGoldCapacity})", ConsoleColor.Yellow);
                         }
                     }
@@ -640,6 +650,7 @@ namespace DragonCLI
                     int gold = 0;
                     foreach(var habitat in gameData.Habitats) { gold += habitat.RetrieveGold(); }
                     Helper.WriteLineColored($"{gold}g has been collected! Press any key to continue.", ConsoleColor.Green);
+                    gameData.Gold += gold;
                     Console.ReadKey();
                 }
 
@@ -668,15 +679,20 @@ namespace DragonCLI
                             Helper.WriteLineColored("Habitat is still building/updating... Press any key to continue.", ConsoleColor.DarkRed);
                         }
                         Console.ReadKey();
+                        continue;
                     }
                     if (habitat.Level < 2)
                     {
                         if (gameData.Gold >= habitatInfo.UpdateCost)
                         {
-                            habitat.Level = 2;
+                            habitat.Upgrade();
                             habitat.BuildingTime = DateTime.Now + habitatInfo.UpdateDuration;
                             gameData.Gold -= habitatInfo.UpdateCost;
                             Helper.WriteLineColored("Habitat is now upgrading... Press any key to continue.", ConsoleColor.DarkCyan);
+                        }
+                        else
+                        {
+                            Helper.WriteLineColored("You don't have enough gold to upgrade this habitat! Press any key to continue", ConsoleColor.DarkRed);
                         }
                     }
                     else
@@ -708,7 +724,13 @@ namespace DragonCLI
                     Console.Write($"{dragon1.Name} - {dragon1.FormalName}");
                     Console.WriteLine($" & {dragon2.Name} - {dragon2.FormalName}");
                     string breedingMessage = (timeLeft.TotalSeconds >= 0) ? timeLeft.Humanize(minUnit: TimeUnit.Second, maxUnit: TimeUnit.Hour, precision: 3) : "[DONE]";
-                    Console.WriteLine($"Due in: {breedingMessage}");
+                    if (breedingMessage == "[DONE]")
+                    {
+                        Helper.WriteLineColored(breedingMessage, ConsoleColor.Green);
+                    } else
+                    {
+                        Console.WriteLine($"Due in: {breedingMessage}");
+                    }
                     Console.Write("Choice>");
 
                     string choice = Console.ReadLine()?.Trim().ToLower();
@@ -751,7 +773,7 @@ namespace DragonCLI
                     Console.WriteLine("---------------------------");
                     if (dragon1 is not null) Console.WriteLine($"Dragon 1: {dragon1.Name} - {dragon1.FormalName}");
                     Console.WriteLine($"Select Dragon {dragonIndex}: ");
-                    List<Dragon> validDragons = [.. gameData.Dragons.Where(dragon => dragon.Level >= 4 && (dragon1 == null || dragon != dragon1))];
+                    List<Dragon> validDragons = [.. gameData.Dragons.Where(dragon => dragon.Level >= 4 && (dragon1 == null || dragon.Id != dragon1.Id))];
                     for (int i = 0; i < validDragons.Count; i++)
                     {
                         Dragon dragon = validDragons[i];
@@ -784,6 +806,7 @@ namespace DragonCLI
                             gameData.UserBreedingCave.Dragon2 = dragon2;
 
                             var outcome = Helper.Breed(dragon1, dragon2);
+                            if (outcome is null) { break; }
                             gameData.UserBreedingCave.BreedOutcome = outcome;
                             gameData.UserBreedingCave.DueDate = DateTime.Now + outcome.BreedingTime;
 

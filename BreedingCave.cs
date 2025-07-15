@@ -19,7 +19,11 @@ namespace DragonCLI
             ["Earth"] = "Metal",
             ["Water"] = "Dark",
             ["Fire"] = "Ice",
-            ["Nature"] = "Electric"
+            ["Nature"] = "Electric",
+            ["Electric"] = "Nature",
+            ["Ice"] = "Fire",
+            ["Metal"] = "Earth",
+            ["Dark"] = "Water"
         };
 
         public static Dictionary<string, Dictionary<string, Func<Egg>>> RegularBreedingTable = new()

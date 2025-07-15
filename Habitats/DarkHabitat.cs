@@ -1,25 +1,27 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Linq;
+﻿using Newtonsoft.Json;
 
 namespace DragonCLI.Habitats
 {
     public class DarkHabitat : Habitat
     {
+        [JsonConstructor]
         public DarkHabitat()
         {
-            Name = "Dark";
-            AllowedElements = ["Dark"];
-            Level = 1;
-            MaxCapacity = 2;
-            Gold = 0;
-            MaxGoldCapacity = 20000;
-            Occupants = [];
-            GoldLastCollected = DateTime.Now;
-
+            AllowedElements = new List<string>();
+            Occupants = new List<Guid>();
+        }
+        public static DarkHabitat CreateDefault()
+        {
+            var habitat = new DarkHabitat();
+            habitat.Name = "Dark";
+            habitat.AllowedElements = ["Dark"];
+            habitat.Level = 1;
+            habitat.MaxCapacity = 2;
+            habitat.Gold = 0;
+            habitat.MaxGoldCapacity = 20000;
+            habitat.Occupants = [];
+            habitat.GoldLastCollected = DateTime.Now;
+            return habitat;
         }
     }
 }

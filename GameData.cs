@@ -29,9 +29,9 @@ namespace DragonCLI
 
         public void InitializeNewGame()
         {
-            Gold = 10000000;
+            Gold = 0;
             Level = 1;
-            Food = 10000000;
+            Food = 0;
             CurrentXP = 0;
             UserBreedingCave = new BreedingCave();
             Farms = [];

@@ -1,25 +1,27 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Linq;
+﻿using Newtonsoft.Json;
 
 namespace DragonCLI.Habitats
 {
     public class IceHabitat : Habitat
     {
+        [JsonConstructor]
         public IceHabitat()
         {
-            Name = "Ice";
-            AllowedElements = ["Ice"];
-            Level = 1;
-            MaxCapacity = 2;
-            Gold = 0;
-            MaxGoldCapacity = 15000;
-            Occupants = [];
-            GoldLastCollected = DateTime.Now;
-
+            AllowedElements = new List<string>();
+            Occupants = new List<Guid>();
+        }
+        public static IceHabitat CreateDefault()
+        {
+            var habitat = new IceHabitat();
+            habitat.Name = "Ice";
+            habitat.AllowedElements = ["Ice"];
+            habitat.Level = 1;
+            habitat.MaxCapacity = 2;
+            habitat.Gold = 0;
+            habitat.MaxGoldCapacity = 15000;
+            habitat.Occupants = [];
+            habitat.GoldLastCollected = DateTime.Now;
+            return habitat;
         }
     }
 }

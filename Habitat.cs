@@ -18,30 +18,8 @@ namespace DragonCLI
         public DateTime? BuildingTime { get; set; }
         public DateTime? GoldLastCollected { get; set; }
 
-        public List<Dragon> Occupants { get; set; } = new();
+        public List<Guid> Occupants { get; set; } = new();
 
-        public void Update()
-        {
-            if(Gold >= MaxGoldCapacity)
-            {
-                return;
-            }
-            else
-            {
-                int totalPlus = 0;
-                foreach(var dragon in Occupants)
-                {
-                    totalPlus += dragon.GoldRate;
-                }
-                if ((Gold + totalPlus) > MaxGoldCapacity)
-                {
-                    Gold = MaxGoldCapacity;
-                } else
-                {
-                    Gold += totalPlus;
-                }
-            }
-        }
 
         public void Upgrade()
         {

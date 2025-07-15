@@ -13,7 +13,7 @@ namespace DragonCLI.Habitats
         public EarthHabitat()
         {
             AllowedElements = new List<string>();
-            Occupants = new List<Dragon>();
+            Occupants = new List<Guid>();
         }
         public static EarthHabitat CreateDefault()
         {

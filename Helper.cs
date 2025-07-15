@@ -6,7 +6,7 @@ namespace DragonCLI
 {
     public static class Helper
     {
-        public static Egg Breed(Dragon dragon1, Dragon dragon2)
+        public static Egg? Breed(Dragon dragon1, Dragon dragon2)
         {
             var random = new Random();
             Egg outcome = null;
@@ -19,6 +19,16 @@ namespace DragonCLI
             bool isRare1 = dragon1.IsRare;
             bool isRare2 = dragon2.IsRare;
 
+            bool isOposite = dragon1.Elements.Count == 1 &&
+                             dragon2.Elements.Count == 1 &&
+                             (BreedingCave.Opposites[dragon1.Elements[0]] == dragon2.Elements[0] ||
+                             BreedingCave.Opposites[dragon2.Elements[0]] == dragon1.Elements[0]);
+            if (isOposite)
+            {
+                Console.WriteLine("These dragons are of opposite elements and cannot be breed directly!\nTry breeding them indirectly by offspings. Press any key to continue");
+                Console.ReadKey();
+                return null;
+            }
             // Both Legendary: return random Legendary dragon
             if (isLegendary1 && isLegendary2)
             {
@@ -134,7 +144,7 @@ namespace DragonCLI
                 BuildXP = 230,
                 UpdateXP = 25000,
                 UpdateCost = 50000,
-                CreateHabitat = () => new FireHabitat()
+                CreateHabitat = () => FireHabitat.CreateDefault()
             },
             ["Water"] = new HabitatInfo
             {
@@ -145,7 +155,7 @@ namespace DragonCLI
                 BuildXP = 500,
                 UpdateXP = 75000,
                 UpdateCost = 100000,
-                CreateHabitat = () => new WaterHabitat()
+                CreateHabitat = () => WaterHabitat.CreateDefault()
             },
             ["Nature"] = new HabitatInfo
             {
@@ -156,7 +166,7 @@ namespace DragonCLI
                 BuildXP = 1500,
                 UpdateXP = 125000,
                 UpdateCost = 125000,
-                CreateHabitat = () => new NatureHabitat()
+                CreateHabitat = () => NatureHabitat.CreateDefault()
             },
             ["Electric"] = new HabitatInfo
             {
@@ -167,7 +177,7 @@ namespace DragonCLI
                 BuildXP = 20000,
                 UpdateXP = 250000,
                 UpdateCost = 250000,
-                CreateHabitat = () => new ElectricHabitat()
+                CreateHabitat = () => ElectricHabitat.CreateDefault()
             },
             ["Ice"] = new HabitatInfo
             {
@@ -178,7 +188,7 @@ namespace DragonCLI
                 BuildXP = 50000,
                 UpdateXP = 500000,
                 UpdateCost = 1000000,
-                CreateHabitat = () => new IceHabitat()
+                CreateHabitat = () => IceHabitat.CreateDefault()
             },
             ["Metal"] = new HabitatInfo
             {
@@ -189,7 +199,7 @@ namespace DragonCLI
                 BuildXP = 100000,
                 UpdateXP = 1000000,
                 UpdateCost = 2000000,
-                CreateHabitat = () => new MetalHabitat()
+                CreateHabitat = () => MetalHabitat.CreateDefault()
             },
             ["Dark"] = new HabitatInfo
             {
@@ -200,7 +210,7 @@ namespace DragonCLI
                 BuildXP = 250000,
                 UpdateXP = 1500000,
                 UpdateCost = 3000000,
-                CreateHabitat = () => new DarkHabitat()
+                CreateHabitat = () => DarkHabitat.CreateDefault()
             },
             ["Legendary"] = new HabitatInfo
             {
@@ -211,7 +221,7 @@ namespace DragonCLI
                 BuildXP = 5000000,
                 UpdateXP = 7000000,
                 UpdateCost = 9000000,
-                CreateHabitat = () => new LegendaryHabitat()
+                CreateHabitat = () => LegendaryHabitat.CreateDefault()
             },
             ["Pure"] = new HabitatInfo
             {
@@ -222,7 +232,7 @@ namespace DragonCLI
                 BuildXP = 3750000,
                 UpdateXP = 4750000,
                 UpdateCost = 4200000,
-                CreateHabitat = () => new PureHabitat()
+                CreateHabitat = () => PureHabitat.CreateDefault()
             }
         };
     
@@ -255,7 +265,7 @@ namespace DragonCLI
                 gameData?.Level >= 15 ? 50 :
                 gameData?.Level >= 10 ? 30 :
                 gameData?.Level >= 5 ? 20 :
-                gameData?.Level >= 2 ? 5 : 0;
+                gameData?.Level >= 2 ? 5 : 3;
             return habitatLimit;
         }
 

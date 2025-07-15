@@ -15,13 +15,16 @@ namespace DragonCLI
         public Farm()
         {
             FarmType = "Food Farm";
-            AvailableCrops = [
+            CurrentCrop = null;
+            DueDateTime = null;
+        }
+        public static List<Crop> InitialFarmConfiguration()
+        {
+            return [
                 new Crop("Bluebell Flower", 50, 5, TimeSpan.FromSeconds(30), 25),
                 new Crop("Chili Pops", 250, 25, TimeSpan.FromMinutes(5), 250),
                 new Crop("Berry Parcel", 1000, 75, TimeSpan.FromMinutes(30), 1000),
                 ];
-            CurrentCrop = null;
-            DueDateTime = null;
         }
         public bool Upgrade(ref GameData gameData)
         {
