@@ -8,6 +8,7 @@
             Level = 1;
             GoldRate = 12;
             FormalName = "Ice and Fire Dragon";
+            IsSpecial = true;
         }
 
 

@@ -21,6 +21,7 @@ namespace DragonCLI
         public string FormalName { get; set; }
 
         public bool IsRare { get; set; }
+        public bool IsSpecial {  get; set; }
 
         public static Dictionary<int, int> FoodTable = new()
         {

@@ -99,13 +99,31 @@ namespace DragonCLI
                 Console.WriteLine("--------------------");
                 Console.WriteLine("[Any Key] Back");
                 Console.WriteLine("--------------------");
+                Console.WriteLine("Dragons marked [S] are Special dragons: You need both parents to be Lvl 10+ when breeding to get a small chance at obtaining");
+                Console.WriteLine("Dragons marked [R] are Rare dragons: You cannot breed elemental dragons and must breed indirectly foor a small chance at obtaining");
+                Console.WriteLine("To obtain Legendary dragons breed two rare dragons for a small chance of obtaining one.\n");
                 Console.WriteLine($"Dragons Discovered: {gameData?.DiscoveredDragons.Values.Count((value) => value is true)}/{gameData?.DiscoveredDragons.Count}\n");
-                var allNames = gameData?.DiscoveredDragons.Keys.ToList();
-                for(int i = 0; i < allNames?.Count; i++)
+                var dragonType = typeof(Dragon);
+                // These contains all types that extend the Dragon abstract class
+                var allDragonTypes = AppDomain.CurrentDomain.GetAssemblies().SelectMany(asm => asm.GetTypes()).Where(t => !t.IsAbstract && dragonType.IsAssignableFrom(t));
+                //var allNames = gameData?.DiscoveredDragons.Keys.ToList();
+                int i = 0;
+                foreach(var type in allDragonTypes)
                 {
-                    bool discovered = gameData?.DiscoveredDragons[allNames[i]] ?? false;
+                    var instance = (Dragon)Activator.CreateInstance(type, "");
+                    bool discovered = gameData?.DiscoveredDragons[instance.FormalName] ?? false;
                     string status = discovered ? "[X]" : "[ ]";
-                    Console.WriteLine($"{status} {i + 1}. {allNames[i]}");
+                    
+                    Console.Write($"{status} {i + 1}. {instance.FormalName} [ ");
+                    foreach(string element in instance.Elements)
+                    {
+                        Helper.WriteColored($"{element} ", Helper.ElementToColor[element]);
+                    }
+                    Console.Write("]");
+                    if (instance.IsSpecial) Console.WriteLine(" [S]");
+                    else if (instance.IsRare) Console.WriteLine(" [R]");
+                    else Console.WriteLine();
+                    i++;
                 }
                 Console.ReadKey();
                 viewing = false;
@@ -244,7 +262,7 @@ namespace DragonCLI
                     var info = kv.Value;
                     Console.Write($"{idx++}. {info.DisplayName} Habitat - ");
                     Helper.WriteColored($"Cost: {info.Cost} Gold", ConsoleColor.Yellow);
-                    Console.WriteLine($", Build Time: {info.BuildDuration.Humanize(minUnit: TimeUnit.Hour, maxUnit: TimeUnit.Second, precision: 3)}");
+                    Console.WriteLine($", Build Time: {info.BuildDuration.Humanize(maxUnit: TimeUnit.Hour, minUnit: TimeUnit.Second, precision: 3)}");
                 }
                 Console.Write("\nChoice> ");
                 string choice = Console.ReadLine()?.Trim().ToLower();
@@ -514,8 +532,18 @@ namespace DragonCLI
                         Dragon dragon = gameData.Dragons.FirstOrDefault(d => d.Id == dragonId);
                         indexedDragons.Add(dragon);
                         if(dragon.Level < 20)
-                        {
-                            Console.WriteLine($"{index + 1}. {dragon.Name} - {dragon.FormalName} (E: {string.Join(", ", dragon.Elements)}) [lvl {dragon.Level}] ({dragon.FoodLevel}/{dragon.FoodLevelMax}) +{dragon.FoodPerPress}");
+                        { 
+                            Console.Write($"{index + 1}. {dragon.Name} - {dragon.FormalName} [ ");
+                            foreach(string element in dragon.Elements)
+                            {
+                                Helper.WriteColored($"{element} ", Helper.ElementToColor[element]);
+                            }
+                            Console.Write($"] [lvl {dragon.Level}] ({dragon.FoodLevel}/{dragon.FoodLevelMax})");
+                            if (dragon.IsRare)
+                            {
+                                Helper.WriteColored(" [Rare]", ConsoleColor.Magenta);
+                            }
+                            Helper.WriteLineColored($" +{dragon.FoodPerPress}\n", ConsoleColor.Red);
                         }
                         else
                         {
@@ -525,7 +553,7 @@ namespace DragonCLI
                     }
                 }
 
-                Console.Write("\nChoice> ");
+                Console.Write("Choice> ");
                 string choice = Console.ReadLine()?.Trim().ToLower();
 
                 if (choice == "b") { viewing = false; break; }
@@ -561,8 +589,8 @@ namespace DragonCLI
                     }
                     else if (dragon.Level < 20)
                     {
-                        dragon.Feed();
                         if (gameData is not null) { gameData.Food -= dragon.FoodPerPress; }
+                        dragon.Feed();
                         Helper.WriteLineColored("Dragon Fed! Press any key to continue", ConsoleColor.Green);
                     }
                     Console.ReadKey();
@@ -721,8 +749,8 @@ namespace DragonCLI
                     dragon1 = gameData.UserBreedingCave.Dragon1;
                     dragon2 = gameData.UserBreedingCave.Dragon2;
                     Console.WriteLine("Dragons are Breeding: ");
-                    Console.Write($"{dragon1.Name} - {dragon1.FormalName}");
-                    Console.WriteLine($" & {dragon2.Name} - {dragon2.FormalName}");
+                    Console.WriteLine($"1. {dragon1.Name} - {dragon1.FormalName}");
+                    Console.WriteLine($"2. {dragon2.Name} - {dragon2.FormalName}");
                     string breedingMessage = (timeLeft.TotalSeconds >= 0) ? timeLeft.Humanize(minUnit: TimeUnit.Second, maxUnit: TimeUnit.Hour, precision: 3) : "[DONE]";
                     if (breedingMessage == "[DONE]")
                     {
@@ -780,7 +808,7 @@ namespace DragonCLI
                         Console.Write($"{i + 1}. {dragon.Name} - {dragon.FormalName} Dragon (Lvl {dragon.Level}) [ ");
                         foreach (string element in dragon.Elements)
                         {
-                            Console.Write($"{element} ");
+                            Helper.WriteColored($"{element} ", Helper.ElementToColor[element]);
                         }
                         Console.WriteLine("]");
                     }

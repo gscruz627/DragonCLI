@@ -8,6 +8,7 @@
             Level = 1;
             GoldRate = 12;
             FormalName = "Prisma Dragon";
+            IsSpecial = true;
         }
 
 

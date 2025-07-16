@@ -14,6 +14,7 @@ namespace DragonCLI.Dragons
             Level = 1;
             GoldRate = 10;
             FormalName = "Butterfly Dragon";
+            IsSpecial = true;
         }
     }
 }

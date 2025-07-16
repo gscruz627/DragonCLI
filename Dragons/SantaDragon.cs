@@ -8,6 +8,7 @@
             Level = 1;
             GoldRate = 9;
             FormalName = "Santa Dragon";
+            IsSpecial = true;
         }
 
 

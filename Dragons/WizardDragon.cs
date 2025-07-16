@@ -8,6 +8,7 @@
             Level = 1;
             GoldRate = 11;
             FormalName = "Wizard Dragon";
+            IsSpecial = true;
         }
 
 

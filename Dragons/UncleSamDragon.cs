@@ -8,6 +8,7 @@
             Level = 1;
             GoldRate = 9;
             FormalName = "Uncle Sam Dragon";
+            IsSpecial = true;
         }
 
 

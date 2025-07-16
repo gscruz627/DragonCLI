@@ -8,6 +8,7 @@
             Level = 1;
             GoldRate = 12;
             FormalName = "Two-Headed Dragon";
+            IsSpecial = true;
         }
 
 

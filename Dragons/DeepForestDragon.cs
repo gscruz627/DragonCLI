@@ -8,6 +8,7 @@
             Level = 1;
             GoldRate = 10;
             FormalName = "Deep Forest Dragon";
+            IsSpecial = true;
         }
 
 

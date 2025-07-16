@@ -8,6 +8,7 @@
             Level = 1;
             GoldRate = 13;
             FormalName = "Hydra Dragon";
+            IsSpecial = true;
         }
 
 

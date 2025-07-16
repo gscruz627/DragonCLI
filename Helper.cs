@@ -6,6 +6,19 @@ namespace DragonCLI
 {
     public static class Helper
     {
+        public static readonly Dictionary<string, ConsoleColor> ElementToColor = new()
+        {
+            ["Earth"] = ConsoleColor.DarkYellow,
+            ["Fire"] = ConsoleColor.Red,
+            ["Water"] = ConsoleColor.Blue,
+            ["Nature"] = ConsoleColor.Green,
+            ["Electric"] = ConsoleColor.Yellow,
+            ["Ice"] = ConsoleColor.Cyan,
+            ["Metal"] = ConsoleColor.Gray,
+            ["Dark"] = ConsoleColor.DarkGray,
+            ["Pure"] = ConsoleColor.White,
+            ["Legendary"] = ConsoleColor.Magenta
+        };
         public static Egg? Breed(Dragon dragon1, Dragon dragon2)
         {
             var random = new Random();
@@ -309,5 +322,7 @@ namespace DragonCLI
         6000000, 7500000, 10000000,12000000,15000000,20000000,22000000,27000000,320000000,38000000,
         45000000,50000000,57000000,65000000,72000000, 80000000,90000000,100000000,110000000, 120000000,
         130000000,140000000,155000000,167000000,180000000,200000000,220000000,230000000,240000000,250000000 };
+     
+        
     }
 }

@@ -8,6 +8,7 @@
             Level = 1;
             GoldRate = 10;
             FormalName = "Joker Dragon";
+            IsSpecial = true;
         }
 
 
