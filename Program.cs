@@ -431,14 +431,22 @@ namespace DragonCLI
                 {
                     if (int.TryParse(choice.AsSpan(8), out int pos) && pos > 0 && pos <= gameData?.Farms.Count)
                     {
-                        if (!gameData.Farms[pos - 1].Upgrade(ref gameData))
-                            Helper.WriteLineColored("You do not have enough Gold to upgrade this farm. Press any key to continue.", ConsoleColor.DarkRed);
+                        if (gameData.Farms[pos-1].DueDateTime is not null)
+                        {
+                            Helper.WriteLineColored("Cannot upgrade this habitat yet! It is producing crops. Press any key to continue", ConsoleColor.DarkRed);
+                            Console.ReadKey();
+                        } else
+                        {
+                            if (!gameData.Farms[pos - 1].Upgrade(ref gameData))
+                                Helper.WriteLineColored("You do not have enough Gold to upgrade this farm. Press any key to continue.", ConsoleColor.DarkRed);
 
-                        Console.ReadKey();
+                            Console.ReadKey();
+                        }
+
                     }
                 }
 
-                if (int.TryParse(choice, out int position))
+                if (int.TryParse(choice, out int position) && position > 0 && position < gameData?.Farms.Count + 1)
                 {
                     var farm = gameData?.Farms[position - 1];
                     if (farm?.CurrentCrop is null) { if (farm is not null) { GrowCrop(farm); } }
@@ -805,7 +813,7 @@ namespace DragonCLI
                     for (int i = 0; i < validDragons.Count; i++)
                     {
                         Dragon dragon = validDragons[i];
-                        Console.Write($"{i + 1}. {dragon.Name} - {dragon.FormalName} Dragon (Lvl {dragon.Level}) [ ");
+                        Console.Write($"{i + 1}. {dragon.Name} - {dragon.FormalName} (Lvl {dragon.Level}) [ ");
                         foreach (string element in dragon.Elements)
                         {
                             Helper.WriteColored($"{element} ", Helper.ElementToColor[element]);
