@@ -3,7 +3,10 @@
 A terminal-based dragon collection and breeding simulator written in C# using .NET. Build habitats, grow food, breed dragons, and collect all dragons.
 
 ---
-
+## Run Instructions
+use `dotnet publish -r win-x64 --self-contained true` to create an executable
+or `-r linux-x64` in linux or either `osx-x64` or `osx-arm64` for MacOS,
+find the executable in `/bin/Release/net8.0/win-x64` or your architecture of choice.
 ## Programming / Coding
 
 ### Language, Tools, and Dependencies
