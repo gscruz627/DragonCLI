@@ -96,7 +96,7 @@ namespace DragonCLI
             while (true)
             {
                 // Display the Book of Dragons, a list of all dragons and whether the user has unlocked them.
-                Console.Clear(); Console.WriteLine("\x1b[3J");;
+                Console.Clear(); Console.WriteLine("\x1b[3J");
                 Console.WriteLine("Book of Dragons");
                 Console.WriteLine("--------------------");
                 Console.WriteLine("[Any Key] Back");
@@ -139,9 +139,10 @@ namespace DragonCLI
         {
             // get farm limit pass gameData object by read only reference
             int farmsLimit = Helper.GetFarmLimit(in gameData);
-            while (true)
+            bool viewing = true;
+            while (viewing)
             {
-                Console.Clear(); Console.WriteLine("\x1b[3J");;
+                Console.Clear(); Console.WriteLine("\x1b[3J");
                 Console.WriteLine("Store");
                 Console.WriteLine("-------------------------");
                 Helper.WriteLineColored($"GOLD: {gameData?.Gold}g", ConsoleColor.Yellow);
@@ -173,7 +174,7 @@ namespace DragonCLI
                         }
                         Helper.WriteLineColored("You don't have enough gold to purchase a farm! Press any key to continue", ConsoleColor.DarkRed);
                         Console.ReadKey(); break;
-                    case "b": break;
+                    case "b": viewing=false; break;
                 }
             }
         }
@@ -183,7 +184,7 @@ namespace DragonCLI
             Dictionary<string, int> availableEggs = Helper.GetAvailableEggs(in gameData);
             while (true)
             {
-                Console.Clear(); Console.WriteLine("\x1b[3J");;
+                Console.Clear(); Console.WriteLine("\x1b[3J");
                 Console.WriteLine("Egg Store");
                 Console.WriteLine("-------------------------");
                 Helper.WriteLineColored($"GOLD: {gameData?.Gold}g", ConsoleColor.Yellow);
@@ -233,7 +234,7 @@ namespace DragonCLI
             int habitatLimit = Helper.GetHabitatLimit(in gameData);
             while (true)
             {
-                Console.Clear(); Console.WriteLine("\x1b[3J");;
+                Console.Clear(); Console.WriteLine("\x1b[3J");
                 Console.WriteLine("Habitat Store");
                 Console.WriteLine("-------------------------");
                 Helper.WriteLineColored($"GOLD: {gameData?.Gold}g - Habitat Count: {gameData?.Habitats.Count}/{habitatLimit}", ConsoleColor.Yellow);
@@ -279,7 +280,7 @@ namespace DragonCLI
         {
             while (true)
             {
-                Console.Clear(); Console.WriteLine("\x1b[3J");;
+                Console.Clear(); Console.WriteLine("\x1b[3J");
                 Console.WriteLine("Hatchery");
                 Console.WriteLine("-------------------------");
                 Console.WriteLine("[1...] Try to hatch this egg");
@@ -320,7 +321,7 @@ namespace DragonCLI
             var compatibleHabitats = new C5.HashedLinkedList<Habitat>();
             while (true)
             {
-                Console.Clear(); Console.WriteLine("\x1b[3J");;
+                Console.Clear(); Console.WriteLine("\x1b[3J");
                 Console.WriteLine("Place egg (only valid habitat showing)");
                 Console.WriteLine("---------------------------------------------------");
                 Console.WriteLine("[1...] Selection");
@@ -370,7 +371,7 @@ namespace DragonCLI
         {
             while (true)
             {
-                Console.Clear(); Console.WriteLine("\x1b[3J");;
+                Console.Clear(); Console.WriteLine("\x1b[3J");
                 Console.WriteLine("Manage Farms");
                 Console.WriteLine("-------------------------------");
                 Helper.WriteColored($"GOLD: {gameData?.Gold}g\n", ConsoleColor.Yellow);
@@ -465,7 +466,7 @@ namespace DragonCLI
         {
             while (true)
             {
-                Console.Clear(); Console.WriteLine("\x1b[3J");;
+                Console.Clear(); Console.WriteLine("\x1b[3J");
                 Console.WriteLine("Select Crop to Grow");
                 Console.WriteLine("---------------------------------");
                 Console.WriteLine("[1...] To Select");
@@ -506,7 +507,7 @@ namespace DragonCLI
         {
             while (true)
             {
-                Console.Clear(); Console.WriteLine("\x1b[3J");;
+                Console.Clear(); Console.WriteLine("\x1b[3J");
                 Console.WriteLine("Feed Dragons");
                 Console.WriteLine("-----------------------------");
                 Helper.WriteLineColored($"FOOD: {gameData?.Food}", ConsoleColor.Red);
@@ -597,7 +598,7 @@ namespace DragonCLI
         {
             while (true)
             {
-                Console.Clear(); Console.WriteLine("\x1b[3J");;
+                Console.Clear(); Console.WriteLine("\x1b[3J");
                 Console.WriteLine("Manage Habitats");
                 Console.WriteLine("------------------------------------------");
                 Helper.WriteLineColored($"GOLD: {gameData?.Gold}", ConsoleColor.Yellow);
@@ -735,7 +736,7 @@ namespace DragonCLI
             Dragon dragon1 = null; Dragon dragon2 = null; int dragonIndex = 1;
             while (true)
             {
-                Console.Clear(); Console.WriteLine("\x1b[3J");;
+                Console.Clear(); Console.WriteLine("\x1b[3J");
                 Console.WriteLine("Breeding Cave");
                 Console.WriteLine("-----------------------------------");
                 if( (gameData?.UserBreedingCave.Dragon1 is not null) && (gameData.UserBreedingCave.Dragon2 is not null))
